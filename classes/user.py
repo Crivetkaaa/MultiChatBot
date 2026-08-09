@@ -52,7 +52,8 @@ class User:
             mes="vk"
             user_id = await db.getUserID(mes, self.who_secret)
             if not user_id:
-                await self.send_message("Пользователь не найден")
+                await self.info_for_user("Пользователь не найден чат закрыт")
+                await self.end_chat()
                 return
             await self.send_to_vk(user_id, msg)
 
@@ -60,12 +61,14 @@ class User:
             mes="tg"
             user_id = await db.getUserID(mes, self.who_secret)
             if not user_id:
-                await self.send_message("Пользователь не найден")
+                await self.info_for_user("Пользователь не найден чат закрыт")
+                await self.end_chat()
                 return
             await self.send_to_tg(user_id, msg)
 
         else:            
-            await self.info_for_user()
+            await self.info_for_user("Ошибка в ключе пользователя чат закрыт")
+            await self.end_chat()
 
     async def send_to_vk(self, who_id: int, text: str):
         params = {

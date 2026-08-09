@@ -39,5 +39,5 @@ class DataBase:
             row = await c.fetchone()
             if row != None:
                 return row[0]
-
+        return 0
 db = DataBase("db.db")
