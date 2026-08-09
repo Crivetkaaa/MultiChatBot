@@ -26,39 +26,41 @@ async def command_start_handler(message: Message) -> None:
 @dp.message(F.text.lower().startswith("переписка "))
 async def message_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-    
-    if message.text.startswith("/message"):
-        secret_args = message.text[9:].strip()
-    else:
-        secret_args = message.text[10:].strip()
 
-    if secret_args:
-        parts = secret_args.split(":")
-        if len(parts) >= 2:
-            res = await check_secret(parts[1])
-            if not res:
+    if not usr.in_message:
+        if message.text.startswith("/message"):
+            secret_args = message.text[9:].strip()
+        else:
+            secret_args = message.text[10:].strip()
+
+        if secret_args:
+            parts = secret_args.split(":")
+            if len(parts) >= 2:
+                res = await check_secret(parts[1])
+                if not res:
+                    await usr.info_for_user("Ноу")
+                    return
+            else:
                 await usr.info_for_user("Ноу")
                 return
-        else:
-            await usr.info_for_user("Ноу")
-            return
 
-    usr_info = message.from_user
-    
-    last_name = usr_info.last_name or ""
-    first_name = usr_info.first_name or ""
-    full_name = f"{last_name} {first_name}".strip()
-    
-    if usr_info.username:
-        url = f"https://t.me/{usr_info.username}"
-    else:
-        url = f"tg://user?id={usr_info.id}"
+        usr_info = message.from_user
         
-    await usr.start_chat(secret_args, full_name, url, "tg")
-    await usr.info_for_user("Вы начали чат")
+        last_name = usr_info.last_name or ""
+        first_name = usr_info.first_name or ""
+        full_name = f"{last_name} {first_name}".strip()
+        
+        if usr_info.username:
+            url = f"https://t.me/{usr_info.username}"
+        else:
+            url = f"tg://user?id={usr_info.id}"
+            
+        await usr.start_chat(secret_args, full_name, url, "tg")
+        await usr.info_for_user("Вы начали чат")
+    else:
+        await usr.info_for_user("Вы уже в диалоге. Завершите его командой /quit")
 
 
-# 3. Хэндлер на команду /quit или "выход" (аналог /quit)
 @dp.message(Command("quit"))
 async def quit_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
@@ -80,12 +82,22 @@ async def echo_handler(message: Message) -> None:
     
     if usr.in_message:
         try:
+            if message.voice:
+                audio = await usr.download_audio_tg(message.voice.file_id)
+                await usr.send_audio(audio)
+                return
+
+
+            if message.text != None:
+                await usr.send_message(message.text)
+                return
+
             if message.text is None:
-                raise ValueError("Медиа не поддерживается")
-                
-            await usr.send_message(message.text)
+                await usr.info_for_user("Данный вид сообщений не поддерживается")
+            
         except Exception:
-            await usr.info_for_user("Данный вид сообщений не поддерживается")
+            await usr.info_for_user("Упс... Что-то пошло не так")
+
     else:
         await usr.info_for_user("Вы не в диалоге")
 

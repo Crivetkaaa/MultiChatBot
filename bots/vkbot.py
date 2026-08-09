@@ -13,8 +13,6 @@ async def check_secret(secret):
 
 @bot.on.private_message(text=["/start", "начать"])
 async def start_handler(message: Message):
-    user_info = await message.get_user(fields=["screen_name"])
-    print(user_info.screen_name)
     usr = await Users.get_user("vk", message.peer_id)
     await usr.info_for_user(usr.secret)
     
@@ -22,18 +20,20 @@ async def start_handler(message: Message):
 @bot.on.private_message(text=["/message <secret>", "переписка <secret>"])
 async def message(message: Message, secret: str = None):
     usr = await Users.get_user("vk", message.peer_id) 
-    if secret != None:
-        res = await check_secret(secret.split(":")[1])
-        if not res:
-            await usr.info_for_user("Ноу")
-            return 
-        
-    usr_info = await message.get_user(fields=["screen_name"])
-    full_name = usr_info.last_name + " " + usr_info.first_name
-    url = f"https://vk.ru/{usr_info.screen_name}"
-    await usr.start_chat(secret, full_name, url, "vk")
-    await usr.info_for_user("Вы начали чат")
-
+    if not usr.in_message:
+        if secret != None:
+            res = await check_secret(secret.split(":")[1])
+            if not res:
+                await usr.info_for_user("Ноу")
+                return 
+            
+        usr_info = await message.get_user(fields=["screen_name"])
+        full_name = usr_info.last_name + " " + usr_info.first_name
+        url = f"https://vk.ru/{usr_info.screen_name}"
+        await usr.start_chat(secret, full_name, url, "vk")
+        await usr.info_for_user("Вы начали чат")
+    else:
+        await usr.info_for_user("Вы уже в диалоге. Завершите его командой /quit")
 
 @bot.on.private_message(text="/quit")
 async def default_handler(message: Message):
@@ -45,7 +45,6 @@ async def default_handler(message: Message):
 @bot.on.private_message(text=["/help", "помощь"])
 async def vk_help_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
-    # Отправляем подготовленный текст справки
     await usr.info_for_user(texts["help"])
 
 
@@ -54,13 +53,22 @@ async def default_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
     if usr.in_message:
         try:
-            await usr.send_message(message.text)
-        except:
+            if message.attachments:
+                for attach in message.attachments:
+                    if attach.audio_message:
+                        await usr.send_audio(attach.audio_message)
+                        return
+
+            if message.text:
+                await usr.send_message(message.text)
+                return
+
             await usr.info_for_user("Данный вид сообщений не поддерживается")
+        except:
+            await usr.info_for_user("Упс... Что-то пошло не так")
 
     else:
         await usr.info_for_user("Вы не в диалоге")
-
 
 
 async def main():

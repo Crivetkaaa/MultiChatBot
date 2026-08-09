@@ -1,10 +1,12 @@
 import secrets
 import random
 import base64
+import aiohttp
 from config import tg_usrs, vk_usrs
 from database import db
 from config import vk_bot, tg_bot
 from vk_api.keyboard import VkKeyboard
+from aiogram.types import BufferedInputFile
 
 
 class User:
@@ -45,6 +47,91 @@ class User:
 
     async def create(self, mes:str):
         await db.createUser(mes, self.user_id, self.secret)
+
+    async def download_audio_tg(self, file_id):
+        file = await tg_bot.get_file(file_id)
+        file_path = file.file_path
+        file_in_memory = await tg_bot.download_file(file_path)
+        file_in_memory.seek(0)
+        audio_bytes = file_in_memory.read()
+        return audio_bytes
+
+    async def send_audio(self, audio):
+        if "dms=" in self.who_secret:
+            mes="vk"
+            user_id = await db.getUserID(mes, self.who_secret)
+            if not user_id:
+                await self.info_for_user("Пользователь не найден чат закрыт")
+                await self.end_chat()
+                return
+            await self.send_audio_vk(user_id, audio)
+
+
+        elif "dGc=" in self.who_secret:
+            mes="tg"
+            user_id = await db.getUserID(mes, self.who_secret)
+            if not user_id:
+                await self.info_for_user("Пользователь не найден чат закрыт")
+                await self.end_chat()
+                return
+            await self.send_audio_tg(user_id, audio)
+
+    async def send_audio_tg(self, user_id, audio):
+        ogg_url = audio.link_ogg
+        async with aiohttp.ClientSession() as session:
+            async with session.get(ogg_url) as response:
+                audio_bytes = await response.read()
+
+        voice_file = BufferedInputFile(audio_bytes, filename="voice.ogg")
+
+        await tg_bot.send_message(
+            chat_id=user_id,
+            text=self.head,
+            parse_mode="HTML"
+        )
+
+        await tg_bot.send_voice(
+            chat_id=user_id,
+            voice=voice_file
+        )
+
+    async def send_audio_vk(self, user_id, audio):
+        upload_server = await vk_bot.api.docs.get_messages_upload_server(
+            type="audio_message", 
+            peer_id=user_id
+        )
+        upload_url = upload_server.upload_url
+
+        form_data = aiohttp.FormData()
+        form_data.add_field('file', audio, filename='voice.ogg', content_type='audio/ogg')
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(upload_url, data=form_data) as response:
+                upload_result = await response.json()
+                
+        if "file" not in upload_result:
+            return
+
+        saved_doc = await vk_bot.api.docs.save(
+            file=upload_result["file"],
+            title="voice.ogg"
+        )
+        
+        if isinstance(saved_doc, list):
+            doc_obj = saved_doc[0].audio_message if hasattr(saved_doc[0], 'audio_message') else saved_doc[0].doc
+        else:
+            doc_obj = getattr(saved_doc, "audio_message", getattr(saved_doc, "doc", None))
+            if not doc_obj and hasattr(saved_doc, 'response'):
+                doc_obj = saved_doc.response.audio_message
+
+        attachment = f"doc{doc_obj.owner_id}_{doc_obj.id}"
+
+        await vk_bot.api.messages.send(
+            peer_id=user_id,
+            message=self.head,
+            attachment=attachment,
+            random_id=random.randint(0, 2**31 - 1)
+        )
 
     async def send_message(self, text:str):
         msg = self.head + text
