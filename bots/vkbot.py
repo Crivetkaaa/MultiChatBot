@@ -56,7 +56,8 @@ async def default_handler(message: Message):
             if message.attachments:
                 for attach in message.attachments:
                     if attach.audio_message:
-                        await usr.send_audio(attach.audio_message)
+                        audio = await usr.download_audio_vk(attach.audio_message)
+                        await usr.send_audio(audio)
                         return
 
             if message.text:
