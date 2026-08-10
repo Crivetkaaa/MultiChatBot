@@ -56,34 +56,36 @@ class User:
         audio_bytes = file_in_memory.read()
         return audio_bytes
 
-    async def send_audio(self, audio):
-        if "dms=" in self.who_secret:
-            mes="vk"
-            user_id = await db.getUserID(mes, self.who_secret)
-            if not user_id:
-                await self.info_for_user("Пользователь не найден чат закрыт")
-                await self.end_chat()
-                return
-            await self.send_audio_vk(user_id, audio)
-
-
-        elif "dGc=" in self.who_secret:
-            mes="tg"
-            user_id = await db.getUserID(mes, self.who_secret)
-            if not user_id:
-                await self.info_for_user("Пользователь не найден чат закрыт")
-                await self.end_chat()
-                return
-            await self.send_audio_tg(user_id, audio)
-
-    async def send_audio_tg(self, user_id, audio):
+    async def download_audio_vk(self, audio):
         ogg_url = audio.link_ogg
         async with aiohttp.ClientSession() as session:
             async with session.get(ogg_url) as response:
                 audio_bytes = await response.read()
 
         voice_file = BufferedInputFile(audio_bytes, filename="voice.ogg")
+        return voice_file
 
+    async def worker(self, mes, function, message):
+        user_id = await db.getUserID(mes, self.who_secret)
+        if not user_id:
+            await self.info_for_user("Пользователь не найден чат закрыт")
+            await self.end_chat()
+            return
+        await function(user_id, message)
+
+    async def send_audio(self, audio):
+        if "dms=" in self.who_secret:
+            mes="vk"
+            await self.worker(mes, self.send_audio_vk, audio)
+
+        elif "dGc=" in self.who_secret:
+            mes="tg"
+            await self.worker(mes, self.send_audio_tg, audio)
+        else:            
+            await self.info_for_user("Ошибка в ключе пользователя чат закрыт")
+            await self.end_chat()
+
+    async def send_audio_tg(self, user_id, audio):
         await tg_bot.send_message(
             chat_id=user_id,
             text=self.head,
@@ -92,7 +94,7 @@ class User:
 
         await tg_bot.send_voice(
             chat_id=user_id,
-            voice=voice_file
+            voice=audio
         )
 
     async def send_audio_vk(self, user_id, audio):
@@ -137,22 +139,12 @@ class User:
         msg = self.head + text
         if "dms=" in self.who_secret:
             mes="vk"
-            user_id = await db.getUserID(mes, self.who_secret)
-            if not user_id:
-                await self.info_for_user("Пользователь не найден чат закрыт")
-                await self.end_chat()
-                return
-            await self.send_to_vk(user_id, msg)
+            await self.worker(mes, self.send_to_vk, msg)
 
         elif "dGc=" in self.who_secret:
             mes="tg"
-            user_id = await db.getUserID(mes, self.who_secret)
-            if not user_id:
-                await self.info_for_user("Пользователь не найден чат закрыт")
-                await self.end_chat()
-                return
-            await self.send_to_tg(user_id, msg)
-
+            await self.worker(mes, self.send_to_tg, msg)
+            
         else:            
             await self.info_for_user("Ошибка в ключе пользователя чат закрыт")
             await self.end_chat()
