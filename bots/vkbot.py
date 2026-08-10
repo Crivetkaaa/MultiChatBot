@@ -60,12 +60,17 @@ async def default_handler(message: Message):
                         await usr.send_audio(audio)
                         return
 
+                    if attach.photo:
+                        photo = await usr.download_photo_vk(attach.photo)
+                        await usr.send_photo(photo, message.text)
+                        return
+
             if message.text:
                 await usr.send_message(message.text)
                 return
 
             await usr.info_for_user("Данный вид сообщений не поддерживается")
-        except:
+        except Exception as e:
             await usr.info_for_user("Упс... Что-то пошло не так")
 
     else:
@@ -79,4 +84,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

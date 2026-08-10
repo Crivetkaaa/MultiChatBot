@@ -8,6 +8,7 @@ from database import db
 from classes.user import User
 from config import vk_usrs, tg_usrs
 
+
 async def main():
     await db.connect()
 
@@ -25,12 +26,11 @@ async def main():
             tg_main(),
             vk_main()
         )
-    except:
+    except Exception as e:
         try:
             sys.exit(0)
         except SystemExit:
             os._exit(0)
-
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ from aiogram.filters import CommandStart, Command
 from aiogram.types import Message
 
 from config import tg_bot as bot
+from config import vk_bot
 from config import dp
 from classes.user import Users
 from resours import texts
@@ -64,15 +65,17 @@ async def message_handler(message: Message) -> None:
 @dp.message(Command("quit"))
 async def quit_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-    await usr.end_chat()
-    await usr.info_for_user("Чат закончен")
+    if usr.in_message:
+        await usr.end_chat()
+        await usr.info_for_user("Чат закончен")
+    else:
+        await usr.info_for_user("Вы не состоите в чате")
 
 
 @dp.message(Command("help"))
 @dp.message(F.text.lower() == "помощь")
 async def tg_help_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-    
     await usr.info_for_user(texts["help"])
 
 
@@ -83,10 +86,14 @@ async def echo_handler(message: Message) -> None:
     if usr.in_message:
         try:
             if message.voice:
-                audio = await usr.download_audio_tg(message.voice.file_id)
+                audio = await usr.download_file_tg(message.voice.file_id)
                 await usr.send_audio(audio)
                 return
 
+            if message.photo:
+                photo = await usr.download_file_tg(message.photo[-1].file_id)
+                await usr.send_photo(photo, message.caption)
+                return
 
             if message.text != None:
                 await usr.send_message(message.text)
@@ -95,9 +102,8 @@ async def echo_handler(message: Message) -> None:
             if message.text is None:
                 await usr.info_for_user("Данный вид сообщений не поддерживается")
             
-        except Exception:
+        except Exception as e:
             await usr.info_for_user("Упс... Что-то пошло не так")
-
     else:
         await usr.info_for_user("Вы не в диалоге")
 
