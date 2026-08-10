@@ -38,8 +38,12 @@ async def message(message: Message, secret: str = None):
 @bot.on.private_message(text="/quit")
 async def default_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
-    await usr.end_chat()
-    await usr.info_for_user("Чат закончен")
+
+    if usr.in_message:
+        await usr.end_chat()
+        await usr.info_for_user("Чат закончен")
+    else: 
+        await usr.info_for_user("Вы не состоите в чате")
 
 
 @bot.on.private_message(text=["/help", "помощь"])
