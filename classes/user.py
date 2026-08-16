@@ -2,13 +2,18 @@ import secrets
 import random
 import base64
 import aiohttp
-import io
+import io, asyncio
 from config import tg_usrs, vk_usrs
 from database import db
 from config import vk_bot, tg_bot
 from aiogram.types import BufferedInputFile
 from vkbottle import PhotoMessageUploader
 from vkbottle import DocMessagesUploader
+from aiogram.types import InputMediaPhoto, InputMediaVideo
+
+
+photo_uploader = PhotoMessageUploader(vk_bot.api)
+doc_uploader = DocMessagesUploader(vk_bot.api)
 
 
 class User:
@@ -47,7 +52,7 @@ class User:
     async def download_file_tg(self, file_id):
         file = await tg_bot.get_file(file_id)
         file_in_memory = await tg_bot.download_file(file.file_path)
-        return file_in_memory.getvalue() 
+        return file_in_memory.getvalue()
 
     async def download_audio_vk(self, audio):
         async with aiohttp.ClientSession() as session:
@@ -85,20 +90,18 @@ class User:
         
         await target_func(user_id, *args, **kwargs)
 
-
     async def send_message(self, text: str):
         safe_text = text or ""
         full_text = self.head + safe_text
         await self._route_and_send("message", full_text)
 
-    async def send_photo(self, photo: bytes, text: str):
+    async def send_media(self, photo: list[bytes], video: list[bytes], text: str):
         safe_text = text or ""
         full_text = self.head + safe_text
-        await self._route_and_send("photo", photo, full_text)
+        await self._route_and_send("media", photo, video, full_text)
 
     async def send_audio(self, audio: bytes):
         await self._route_and_send("audio", audio)
-
 
     async def send_message_vk(self, user_id: int, text: str):
         await vk_bot.api.messages.send(
@@ -110,23 +113,108 @@ class User:
     async def send_message_tg(self, user_id: int, text: str):
         await tg_bot.send_message(user_id, text, parse_mode="HTML")
 
-    async def send_photo_vk(self, user_id: int, photo: bytes, text: str):
-        vk_buffer = io.BytesIO(photo)
-        vk_buffer.name = "photo.jpg"
+    async def get_file_format(self, data: bytes, default: str = ".jpg") -> str:
+        if not data or len(data) < 4:
+            return default
+        header = data[:12]
+        if header.startswith(b'\xff\xd8\xff'): return ".jpg"
+        if header.startswith(b'\x89PNG\r\n\x1a\n'): return ".png"
+        if header.startswith(b'GIF87a') or header.startswith(b'GIF89a'): return ".gif"
+        if header.startswith(b'RIFF') and header[8:12] == b'WEBP': return ".webp"
+        return default
+    
+    #TODO Понять почему отправляется через раз
+    async def send_media_vk(
+        self,
+        user_id: int,
+        photo: list[bytes],
+        video: list[bytes],
+        text: str
+    ):
+        attachments_list = []
 
-        photo_uploader = PhotoMessageUploader(vk_bot.api)
-        vk_attachment = await photo_uploader.upload(vk_buffer)
+        if photo:
+            for p_bytes in photo:
+                data_stream = io.BytesIO(p_bytes)
+                
+                photo_attachment = await photo_uploader.upload(
+                    file_source=data_stream.getvalue(),
+                    peer_id=user_id
+                )
+                attachments_list.append(photo_attachment)
+                await asyncio.sleep(0.3) 
 
-        await vk_bot.api.messages.send(
-            peer_id=user_id,
-            message=text,
-            attachment=str(vk_attachment),
-            random_id=random.randint(0, 2**31 - 1)
-        )
+        if photo and video:
+            await asyncio.sleep(0.8)
 
-    async def send_photo_tg(self, user_id: int, photo: bytes, text: str):
-        photo_file = BufferedInputFile(file=photo, filename="photo.jpg")
-        await tg_bot.send_photo(user_id, photo_file, caption=text, parse_mode="HTML")
+        if video:
+            for v_bytes in video:
+                data_stream = io.BytesIO(v_bytes)
+                video_attachment = await doc_uploader.upload(
+                    file_source=data_stream.getvalue(),
+                    peer_id=user_id,
+                    title="video.mp4"
+                )
+                attachments_list.append(video_attachment)
+                await asyncio.sleep(0.3) 
+
+        final_attachment = ",".join(attachments_list)
+
+        try:
+
+            await vk_bot.api.messages.send(
+                peer_id=user_id,
+                message=text,
+                attachment=final_attachment, 
+                random_id=random.randint(0, 2**31 - 1)
+            )
+        except Exception as e:
+            print(f"Ошибка отправки в ВК: {e}")
+
+
+
+    async def send_media_tg(self,user_id: int, photo: list[bytes], video: list[bytes], text: str):
+        media = []
+
+        for p_bytes in photo:
+            media.append(
+                InputMediaPhoto(
+                    media=BufferedInputFile(
+                        file=p_bytes,
+                        filename="photo.jpg"
+                    )
+                )
+            )
+        if video:
+            for v_bytes in video:
+                media.append(
+                    InputMediaVideo(
+                        media=BufferedInputFile(
+                            file=v_bytes,
+                            filename="video.mp4"
+                        )
+                    )
+                )
+
+        if not media:
+            return
+
+        if text:
+            first = media[0]
+
+            if isinstance(first, InputMediaPhoto):
+                media[0] = InputMediaPhoto(
+                    media=first.media,
+                    caption=text,
+                    parse_mode="HTML"
+                )
+            else:
+                media[0] = InputMediaVideo(
+                    media=first.media,
+                    caption=text,
+                    parse_mode="HTML"
+                )
+        await tg_bot.send_media_group(user_id, media) 
 
     async def send_audio_tg(self, user_id: int, audio_raw: bytes):
         audio = BufferedInputFile(file=audio_raw, filename="audio.ogg")
@@ -137,8 +225,7 @@ class User:
         audio_buffer = io.BytesIO(audio)
         audio_buffer.name = "voice.ogg"
 
-        uploader = DocMessagesUploader(vk_bot.api)
-        attachment = await uploader.upload(
+        attachment = await doc_uploader.upload(
             file_source=audio_buffer, 
             peer_id=user_id,
             type="audio_message" 
@@ -150,6 +237,7 @@ class User:
             attachment=str(attachment), 
             random_id=random.randint(0, 2**31 - 1)
         )
+
     async def info_for_user(self, text: str, keyboard=None):
         if "dms=" in self.secret:
             params = {

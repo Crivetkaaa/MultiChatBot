@@ -1,10 +1,9 @@
 import asyncio
-from aiogram import html, F
+from aiogram import F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message
 
 from config import tg_bot as bot
-from config import vk_bot
 from config import dp
 from classes.user import Users
 from resours import texts
@@ -80,7 +79,10 @@ async def tg_help_handler(message: Message) -> None:
 
 
 @dp.message()
-async def echo_handler(message: Message) -> None:
+async def echo_handler(message: Message, album: list[Message] = None) -> None:
+    if message.media_group_id and album is None:
+        return
+
     usr = await Users.get_user("tg", message.chat.id)
     
     if usr.in_message:
@@ -90,20 +92,37 @@ async def echo_handler(message: Message) -> None:
                 await usr.send_audio(audio)
                 return
 
-            if message.photo:
-                photo = await usr.download_file_tg(message.photo[-1].file_id)
-                await usr.send_photo(photo, message.caption)
-                return
+            messages = album if album else [message]
 
-            if message.text != None:
+            photos = []
+            videos = []
+            caption = None
+
+            for msg in messages:
+                if msg.caption:
+                    caption = msg.caption
+
+                if msg.photo:
+                    photo = await usr.download_file_tg(msg.photo[-1].file_id)
+                    photos.append(photo)
+
+                elif msg.video:
+                    video = await usr.download_file_tg(msg.video.file_id)
+                    videos.append(video)
+
+            if photos or videos:
+                await usr.send_media(photos, videos, caption)
+                return
+            
+            if message.text is not None:
                 await usr.send_message(message.text)
                 return
 
-            if message.text is None:
-                await usr.info_for_user("Данный вид сообщений не поддерживается")
+            await usr.info_for_user("Данный вид сообщений не поддерживается")
             
         except Exception as e:
             await usr.info_for_user("Упс... Что-то пошло не так")
+            print(e)
     else:
         await usr.info_for_user("Вы не в диалоге")
 
