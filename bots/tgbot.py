@@ -1,5 +1,4 @@
 import asyncio
-from aiogram import F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message
 
@@ -16,14 +15,21 @@ async def check_secret(secret: str) -> bool:
 
 
 @dp.message(CommandStart())
-@dp.message(F.text.lower() == "начать")
 async def command_start_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-    await usr.info_for_user(usr.secret)
+    text = texts["help"] + "\n\n" + f'{texts["start_bottom"]} {usr.secret}'
+    await usr.info_for_user(text)
 
+
+@dp.message(Command("status"))
+async def status_handler(message: Message):
+    usr = await Users.get_user("tg", message.chat.id)
+    if usr.in_message:
+        await usr.info_for_user(f'{texts["status"]} {usr.who_secret}')
+    else:
+        await usr.info_for_user(texts["not_in_chat"])
 
 @dp.message(Command("message"))
-@dp.message(F.text.lower().startswith("переписка "))
 async def message_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
 
@@ -38,10 +44,10 @@ async def message_handler(message: Message) -> None:
             if len(parts) >= 2:
                 res = await check_secret(parts[1])
                 if not res:
-                    await usr.info_for_user("Ноу")
+                    await usr.info_for_user(texts["err_secret"])
                     return
             else:
-                await usr.info_for_user("Ноу")
+                await usr.info_for_user(texts["err_secret"])
                 return
 
         usr_info = message.from_user
@@ -56,9 +62,9 @@ async def message_handler(message: Message) -> None:
             url = f"tg://user?id={usr_info.id}"
             
         await usr.start_chat(secret_args, full_name, url, "tg")
-        await usr.info_for_user("Вы начали чат")
+        await usr.info_for_user(texts["start_chat"])
     else:
-        await usr.info_for_user("Вы уже в диалоге. Завершите его командой /quit")
+        await usr.info_for_user(texts["err_new_chat"])
 
 
 @dp.message(Command("quit"))
@@ -66,13 +72,12 @@ async def quit_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
     if usr.in_message:
         await usr.end_chat()
-        await usr.info_for_user("Чат закончен")
+        await usr.info_for_user(texts["end_chat"])
     else:
-        await usr.info_for_user("Вы не состоите в чате")
+        await usr.info_for_user(texts["not_in_chat"])
 
 
 @dp.message(Command("help"))
-@dp.message(F.text.lower() == "помощь")
 async def tg_help_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
     await usr.info_for_user(texts["help"])
@@ -96,6 +101,7 @@ async def echo_handler(message: Message, album: list[Message] = None) -> None:
 
             photos = []
             videos = []
+            documents = []
             caption = None
 
             for msg in messages:
@@ -104,27 +110,36 @@ async def echo_handler(message: Message, album: list[Message] = None) -> None:
 
                 if msg.photo:
                     photo = await usr.download_file_tg(msg.photo[-1].file_id)
-                    photos.append(photo)
+                    photos.append(("photo.jpg", photo))
 
                 elif msg.video:
                     video = await usr.download_file_tg(msg.video.file_id)
-                    videos.append(video)
+                    videos.append(("video.mp4", video))
+
+                elif msg.document:
+                    doc = await usr.download_file_tg(msg.document.file_id)
+                    documents.append((msg.document.file_name, doc))
+
 
             if photos or videos:
                 await usr.send_media(photos, videos, caption)
+                return
+
+            if documents:
+                await usr.send_document(documents, caption)
                 return
             
             if message.text is not None:
                 await usr.send_message(message.text)
                 return
 
-            await usr.info_for_user("Данный вид сообщений не поддерживается")
+            await usr.info_for_user(texts["err_type"])
             
         except Exception as e:
-            await usr.info_for_user("Упс... Что-то пошло не так")
+            await usr.info_for_user(texts["err"])
             print(e)
     else:
-        await usr.info_for_user("Вы не в диалоге")
+        await usr.info_for_user(texts["not_in_chat"])
 
 
 async def main() -> None:
