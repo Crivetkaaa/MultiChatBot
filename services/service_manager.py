@@ -1,19 +1,20 @@
+from __future__ import annotations
 from resours import texts
 from database.database import db
 import random
-from vkbottle.bot import Bot as VkBot
-from aiogram import Bot as TgBot
-
 from services.vk import vkService, VkService
 from services.tg import tgService, TgService
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from classes.user import User
 
 class ServiceManager:
     def __init__(self, vk:VkService, tg:TgService):
         self.vk = vk
         self.tg = tg
 
-    async def _route_and_send(self, action:str, usr, *args, **kwargs):
+    async def _route_and_send(self, action:str, usr: User, *args, **kwargs):
             if "dms=" in usr.who_secret:
                 platform = self.vk
                 p = "vk"
@@ -37,19 +38,19 @@ class ServiceManager:
                 return
             await target_func(user_id, *args, **kwargs)
 
-    async def send_message(self, usr, text: str):
+    async def send_message(self, usr:User, text: str):
         finally_text = await usr.finally_text(text)
         await self._route_and_send("message", usr, finally_text)
 
-    async def send_audio(self, usr, audio: bytes):
+    async def send_audio(self, usr:User, audio: bytes):
         full_text = await usr.finally_text("")
         await self._route_and_send("audio", usr, audio, full_text)
 
-    async def send_media(self, usr, media: list[tuple[str, bytes]], text: str):
+    async def send_media(self, usr:User, media: list[tuple[str, bytes]], text: str):
         full_text = await usr.finally_text(text)
         await self._route_and_send("media", usr, media, full_text)
 
-    async def info_for_user(self, usr, keyboard, text: str):
+    async def info_for_user(self, usr:User, keyboard, text: str):
         if "dms=" in usr.secret:
             params = {
                 "peer_id": usr.user_id,

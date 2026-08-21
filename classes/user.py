@@ -2,6 +2,7 @@ import secrets
 import base64
 from config import tg_usrs, vk_usrs
 from database import db
+from services.service_manager import Manager
 
 
 class User:
@@ -42,8 +43,8 @@ class User:
         self.head = None
 
     async def err_end_chat(self, text:str):
-        await self.info_for_user(text)
         await self.end_chat()
+        await Manager.info_for_user(self, None, text)
 
 
 class Users:
