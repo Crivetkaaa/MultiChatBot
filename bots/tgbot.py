@@ -5,6 +5,9 @@ from aiogram.types import Message
 from config import tg_bot as bot
 from config import dp
 from classes.user import Users
+from classes.media import Media, MediaType
+from services.service_manager import Manager
+from services.tg import tgService
 from resours import texts
 
 
@@ -18,16 +21,17 @@ async def check_secret(secret: str) -> bool:
 async def command_start_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
     text = texts["help"] + "\n\n" + f'{texts["start_bottom"]} {usr.secret}'
-    await usr.info_for_user(text)
+    await Manager.info_for_user(usr, text)
 
 
 @dp.message(Command("status"))
 async def status_handler(message: Message):
     usr = await Users.get_user("tg", message.chat.id)
     if usr.in_message:
-        await usr.info_for_user(f'{texts["status"]} {usr.who_secret}')
+        await Manager.info_for_user(usr, f'{texts["status"]} {usr.who_secret}')
     else:
-        await usr.info_for_user(texts["not_in_chat"])
+        await Manager.info_for_user(usr, None, texts["not_in_chat"])
+
 
 @dp.message(Command("message"))
 async def message_handler(message: Message) -> None:
@@ -36,18 +40,16 @@ async def message_handler(message: Message) -> None:
     if not usr.in_message:
         if message.text.startswith("/message"):
             secret_args = message.text[9:].strip()
-        else:
-            secret_args = message.text[10:].strip()
 
         if secret_args:
             parts = secret_args.split(":")
             if len(parts) >= 2:
                 res = await check_secret(parts[1])
                 if not res:
-                    await usr.info_for_user(texts["err_secret"])
+                    await Manager.info_for_user(usr, None, texts["err_secret"])
                     return
             else:
-                await usr.info_for_user(texts["err_secret"])
+                await Manager.info_for_user(usr, None, texts["err_secret"])
                 return
 
         usr_info = message.from_user
@@ -62,9 +64,9 @@ async def message_handler(message: Message) -> None:
             url = f"tg://user?id={usr_info.id}"
             
         await usr.start_chat(secret_args, full_name, url, "tg")
-        await usr.info_for_user(texts["start_chat"])
+        await Manager.info_for_user(usr, None, texts["start_chat"])
     else:
-        await usr.info_for_user(texts["err_new_chat"])
+        await Manager.info_for_user(usr, None, texts["err_new_chat"])
 
 
 @dp.message(Command("quit"))
@@ -72,15 +74,15 @@ async def quit_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
     if usr.in_message:
         await usr.end_chat()
-        await usr.info_for_user(texts["end_chat"])
+        await Manager.info_for_user(usr, None, texts["end_chat"])
     else:
-        await usr.info_for_user(texts["not_in_chat"])
+        await Manager.info_for_user(usr, None, texts["not_in_chat"])
 
 
 @dp.message(Command("help"))
 async def tg_help_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-    await usr.info_for_user(texts["help"])
+    await Manager.info_for_user(usr, None, texts["help"])
 
 
 @dp.message()
@@ -93,15 +95,13 @@ async def echo_handler(message: Message, album: list[Message] = None) -> None:
     if usr.in_message:
         try:
             if message.voice:
-                audio = await usr.download_file_tg(message.voice.file_id)
-                await usr.send_audio(audio)
+                audio = await tgService.download_file_tg(message.voice.file_id)
+                await Manager.send_audio(usr, audio)
                 return
 
             messages = album if album else [message]
 
-            photos = []
-            videos = []
-            documents = []
+            media = []
             caption = None
 
             for msg in messages:
@@ -109,37 +109,50 @@ async def echo_handler(message: Message, album: list[Message] = None) -> None:
                     caption = msg.caption
 
                 if msg.photo:
-                    photo = await usr.download_file_tg(msg.photo[-1].file_id)
-                    photos.append(("photo.jpg", photo))
+                    photo_bytes = await tgService.download_file_tg(msg.photo[-1].file_id)
+                    media.append(
+                        Media(
+                            MediaType.PHOTO,
+                            "photo.jpg",
+                            photo_bytes
+                            )
+                        )
 
                 elif msg.video:
-                    video = await usr.download_file_tg(msg.video.file_id)
-                    videos.append(("video.mp4", video))
+                    video_bytes = await tgService.download_file_tg(msg.video.file_id)
+                    media.append(
+                        Media(
+                            MediaType.VIDEO,
+                            "video.mp4",
+                            video_bytes
+                            )
+                        )
 
                 elif msg.document:
-                    doc = await usr.download_file_tg(msg.document.file_id)
-                    documents.append((msg.document.file_name, doc))
+                    doc_bytes = await tgService.download_file_tg(msg.document.file_id)
+                    media.append(
+                        Media(
+                            MediaType.DOCUMENT,
+                            msg.document.file_name,
+                            doc_bytes
+                            )
+                        )
 
-
-            if photos or videos:
-                await usr.send_media(photos, videos, caption)
-                return
-
-            if documents:
-                await usr.send_document(documents, caption)
+            if media:
+                await Manager.send_media(usr, media, caption)
                 return
             
             if message.text is not None:
-                await usr.send_message(message.text)
+                await Manager.send_message(usr, message.text)
                 return
 
-            await usr.info_for_user(texts["err_type"])
+            await Manager.info_for_user(usr, None, texts["err_type"])
             
         except Exception as e:
-            await usr.info_for_user(texts["err"])
+            await Manager.info_for_user(usr, None, texts["err"])
             print(e)
     else:
-        await usr.info_for_user(texts["not_in_chat"])
+        await Manager.info_for_user(usr, None, texts["not_in_chat"])
 
 
 async def main() -> None:
