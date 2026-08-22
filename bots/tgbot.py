@@ -5,7 +5,7 @@ from aiogram.types import Message
 from config import tg_bot as bot
 from config import dp
 from classes.user import Users
-from classes.media import Media, MediaType
+from classes.media import Media, MediaType, Sticker, StickerType
 from services.service_manager import Manager
 from services.tg import tgService
 from resours import texts
@@ -97,6 +97,22 @@ async def echo_handler(message: Message, album: list[Message] = None) -> None:
             if message.voice:
                 audio = await tgService.download_file_tg(message.voice.file_id)
                 await Manager.send_audio(usr, audio)
+                return
+
+            if message.sticker:
+                sticker = await tgService.download_file_tg(message.sticker.file_id)
+                if message.sticker.is_animated:
+                    pass
+                elif message.sticker.is_video:
+                    stic = Sticker(StickerType.VIDEO, "s.webm", sticker)
+                    with open("s.webm", "wb") as file:
+                        file.write(sticker)
+                    with open("s.gif", "wb") as file:
+                        file.write(sticker)
+                                        
+                else:
+                    stic = Sticker(StickerType.PHOTO, "s.webp", sticker)
+                await Manager.send_sticker(usr, stic)
                 return
 
             messages = album if album else [message]

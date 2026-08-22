@@ -5,7 +5,7 @@ from services.service_manager import Manager
 from config import vk_bot as bot
 from services.vk import vkService
 from resours import texts
-from classes.media import MediaType, Media
+from classes.media import MediaType, Media, Sticker, StickerType
 
 
 processed_messages = set()
@@ -92,6 +92,16 @@ async def default_handler(message: Message):
                 if attach.audio_message:
                     audio = await vkService.download_audio_vk(attach.audio_message)
                     await Manager.send_audio(usr, audio)
+                    return
+
+                if attach.sticker:
+                    sticker = await vkService.download_sticker_vk(attach.sticker.sticker_id)
+                    stic = Sticker(
+                        StickerType.PHOTO,
+                        "s.png",
+                        sticker
+                    )
+                    await Manager.send_sticker(usr, stic)
                     return
 
                 if attach.video:

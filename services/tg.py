@@ -1,7 +1,7 @@
 from aiogram import Bot
 from aiogram.types import BufferedInputFile
-from aiogram.types import InputMediaPhoto, InputMediaVideo, InputMediaDocument
-from classes.media import Media, MediaType
+from aiogram.types import InputMediaPhoto, InputMediaVideo, InputMediaDocument, InputMediaSticker
+from classes.media import Media, MediaType, StickerType, Sticker
 from config import tg_bot
 
 class TgService:
@@ -51,6 +51,29 @@ class TgService:
                 )
 
         return m
+
+    async def sticker_update(self, user_id:int, sticker: Sticker, text:str):
+        file = BufferedInputFile(
+            file=sticker.m_bytes,
+            filename=sticker.filename
+        )
+
+        if sticker.s_type == StickerType.PHOTO:
+            await self.bot.send_photo(
+                chat_id=user_id,
+                photo=file,
+                caption=text
+            )
+
+        elif sticker.s_type == StickerType.VIDEO:
+            await self.bot.send_video(
+                chat_id=user_id,
+                video=file,
+                caption=text
+            )
+
+    async def send_sticker(self, user_id: int, sticker:Sticker, text:str):
+        await self.sticker_update(user_id, sticker, text)
 
     async def info_for_user(self, user_id, text, keyboard=None):
         await self.bot.send_message(user_id, text, reply_markup=keyboard) 

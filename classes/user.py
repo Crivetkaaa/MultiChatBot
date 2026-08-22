@@ -28,7 +28,7 @@ class User:
         else:
             self.head = f"Сообщение из {from_}\nОт: {name}\n\n"
 
-    async def finally_text(self, text: str) -> str:
+    async def finally_text(self, text: str=None) -> str:
         safe_text = text or ""
         return self.head + safe_text
 

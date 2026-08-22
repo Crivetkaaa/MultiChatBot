@@ -3,10 +3,11 @@ import io
 from vkbottle import PhotoMessageUploader, DocMessagesUploader
 from vkbottle.bot import Bot
 import aiohttp
-from classes.media import Media, MediaType
+from classes.media import Media, MediaType, Sticker, StickerType
 import asyncio
 import vkbottle_types.objects as vt
 from config import vk_bot
+from classes.utils import Utils
 
 class VkService:
     def __init__(self, vk_bot: Bot):
@@ -28,6 +29,10 @@ class VkService:
 
     async def download_doc_vk(self, doc:vt.DocsDoc):
         return await self.download_vk(doc.url)
+
+    async def download_sticker_vk(self, sticker_id: int):
+        url = f"https://vk.ru/sticker/1-{sticker_id}-352b"
+        return await self.download_vk(url)
 
     async def send_vk(self, peer_id: int, text: str, attachment:str=None):
         try:
@@ -82,6 +87,30 @@ class VkService:
                 at.append(min_at)
                 await asyncio.sleep(0.3)
         return at
+
+    async def sticker_update(self, user_id:int, sticker: Sticker, text:str):
+        uploader = None
+        if sticker.s_type == StickerType.PHOTO:
+            uploader = self.photo_uploader
+        elif sticker.s_type == StickerType.VIDEO:
+            sticker.m_bytes = await Utils.webm_to_gif(sticker.m_bytes)
+            uploader = self.doc_uploader
+
+        data = io.BytesIO(sticker.m_bytes)
+        data.name = sticker.filename
+
+        at = await uploader.upload(
+            file_source=data,
+            peer_id=user_id,
+            title=sticker.filename
+        )
+
+        finally_attachment = ",".join([at])
+        await self.send_vk(user_id, text, finally_attachment)
+
+    async def send_sticker(self, user_id:int, sticker: Sticker, text:str):
+        await self.sticker_update(user_id, sticker, text)
+
 
     async def info_for_user(self, **params):
         await self.bot.api.messages.send(**params)

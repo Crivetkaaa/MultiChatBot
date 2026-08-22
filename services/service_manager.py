@@ -4,6 +4,7 @@ from database.database import db
 import random
 from services.vk import vkService, VkService
 from services.tg import tgService, TgService
+from classes.media import Media, Sticker
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -43,12 +44,16 @@ class ServiceManager:
         await self._route_and_send("message", usr, finally_text)
 
     async def send_audio(self, usr:User, audio: bytes):
-        full_text = await usr.finally_text("")
+        full_text = await usr.finally_text()
         await self._route_and_send("audio", usr, audio, full_text)
 
-    async def send_media(self, usr:User, media: list[tuple[str, bytes]], text: str):
+    async def send_media(self, usr:User, media: list[Media], text: str):
         full_text = await usr.finally_text(text)
         await self._route_and_send("media", usr, media, full_text)
+
+    async def send_sticker(self, usr:User, sticker: Sticker):
+        full_text = await usr.finally_text()
+        await self._route_and_send("sticker", usr, sticker, full_text)
 
     async def info_for_user(self, usr:User, keyboard, text: str):
         if "dms=" in usr.secret:
