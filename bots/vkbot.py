@@ -5,7 +5,8 @@ from services.service_manager import Manager
 from config import vk_bot as bot
 from services.vk import vkService
 from resours import texts
-from classes.media import MediaType, Media, Sticker, StickerType
+from classes.media import MediaType, StickerType
+from classes.utils import Utils
 
 
 processed_messages = set()
@@ -38,7 +39,7 @@ async def message(message: Message, secret: str = None):
     usr = await Users.get_user("vk", message.peer_id) 
     if not usr.in_message:
         if secret != None:
-            res = await check_secret(secret.split(":")[1])
+            res = await Utils.check_secret(secret)
             if not res:
                 await Manager.info_for_user(usr, None, texts["err_secret"])
                 return 
@@ -96,11 +97,7 @@ async def default_handler(message: Message):
 
                 if attach.sticker:
                     sticker = await vkService.download_sticker_vk(attach.sticker.sticker_id)
-                    stic = Sticker(
-                        StickerType.PHOTO,
-                        "s.png",
-                        sticker
-                    )
+                    stic = await Utils.createSticker(StickerType.PHOTO, "s.png", sticker)
                     await Manager.send_sticker(usr, stic)
                     return
 
@@ -112,23 +109,13 @@ async def default_handler(message: Message):
             for attach in full_attachments:
                 if attach.photo:
                     photo_bytes = await vkService.download_photo_vk(attach.photo)
-                    media.append(
-                        Media(
-                            MediaType.PHOTO,
-                            "photo.jpg",
-                            photo_bytes
-                            )
-                        )
+                    photo = await Utils.createMedia(MediaType.PHOTO, "photo.jpg", photo_bytes)
+                    media.append(photo)
 
                 elif attach.doc:
                     doc_bytes = await vkService.download_doc_vk(attach.doc)
-                    media.append(
-                        Media(
-                            MediaType.DOCUMENT,
-                            attach.doc.title,
-                            doc_bytes
-                        )
-                    )
+                    doc = await Utils.createMedia(MediaType.DOCUMENT, attach.doc.title, doc_bytes)
+                    media.append(doc)
 
             if media:
                 await Manager.send_media(usr, media, text=message.text)

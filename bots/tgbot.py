@@ -5,10 +5,11 @@ from aiogram.types import Message
 from config import tg_bot as bot
 from config import dp
 from classes.user import Users
-from classes.media import Media, MediaType, Sticker, StickerType
+from classes.media import MediaType, StickerType
 from services.service_manager import Manager
 from services.tg import tgService
 from resours import texts
+from classes.utils import Utils
 
 
 async def check_secret(secret: str) -> bool:
@@ -36,37 +37,32 @@ async def status_handler(message: Message):
 @dp.message(Command("message"))
 async def message_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-
-    if not usr.in_message:
-        if message.text.startswith("/message"):
-            secret_args = message.text[9:].strip()
-
-        if secret_args:
-            parts = secret_args.split(":")
-            if len(parts) >= 2:
-                res = await check_secret(parts[1])
-                if not res:
-                    await Manager.info_for_user(usr, None, texts["err_secret"])
-                    return
-            else:
-                await Manager.info_for_user(usr, None, texts["err_secret"])
-                return
-
-        usr_info = message.from_user
-        
-        last_name = usr_info.last_name or ""
-        first_name = usr_info.first_name or ""
-        full_name = f"{last_name} {first_name}".strip()
-        
-        if usr_info.username:
-            url = f"https://t.me/{usr_info.username}"
-        else:
-            url = f"tg://user?id={usr_info.id}"
-            
-        await usr.start_chat(secret_args, full_name, url, "tg")
-        await Manager.info_for_user(usr, None, texts["start_chat"])
-    else:
+    if usr.in_message:
         await Manager.info_for_user(usr, None, texts["err_new_chat"])
+        return
+
+
+    _, secret_args = message.text.split(maxsplit=1)
+    print(secret_args)
+    if secret_args:
+        res = await Utils.check_secret(secret_args)
+        if not res:
+            await Manager.info_for_user(usr, None, texts["err_secret"])
+            return
+
+    usr_info = message.from_user
+    
+    last_name = usr_info.last_name or ""
+    first_name = usr_info.first_name or ""
+    full_name = f"{last_name} {first_name}".strip()
+    
+    if usr_info.username:
+        url = f"https://t.me/{usr_info.username}"
+    else:
+        url = f"tg://user?id={usr_info.id}"
+        
+    await usr.start_chat(secret_args, full_name, url, "tg")
+    await Manager.info_for_user(usr, None, texts["start_chat"])
 
 
 @dp.message(Command("quit"))
@@ -104,14 +100,9 @@ async def echo_handler(message: Message, album: list[Message] = None) -> None:
                 if message.sticker.is_animated:
                     pass
                 elif message.sticker.is_video:
-                    stic = Sticker(StickerType.VIDEO, "s.webm", sticker)
-                    with open("s.webm", "wb") as file:
-                        file.write(sticker)
-                    with open("s.gif", "wb") as file:
-                        file.write(sticker)
-                                        
+                    stic = await Utils.createSticker(StickerType.VIDEO, "s.webm", sticker)                                    
                 else:
-                    stic = Sticker(StickerType.PHOTO, "s.webp", sticker)
+                    stic = await Utils.createSticker(StickerType.PHOTO, "s.webp", sticker)
                 await Manager.send_sticker(usr, stic)
                 return
 
@@ -126,33 +117,18 @@ async def echo_handler(message: Message, album: list[Message] = None) -> None:
 
                 if msg.photo:
                     photo_bytes = await tgService.download_file_tg(msg.photo[-1].file_id)
-                    media.append(
-                        Media(
-                            MediaType.PHOTO,
-                            "photo.jpg",
-                            photo_bytes
-                            )
-                        )
+                    photo = await Utils.createMedia(MediaType.PHOTO, "p.jpg", photo_bytes)
+                    media.append(photo)
 
                 elif msg.video:
                     video_bytes = await tgService.download_file_tg(msg.video.file_id)
-                    media.append(
-                        Media(
-                            MediaType.VIDEO,
-                            "video.mp4",
-                            video_bytes
-                            )
-                        )
+                    video = await Utils.createMedia(MediaType.VIDEO, "v.mp4", video_bytes)
+                    media.append(video)
 
                 elif msg.document:
                     doc_bytes = await tgService.download_file_tg(msg.document.file_id)
-                    media.append(
-                        Media(
-                            MediaType.DOCUMENT,
-                            msg.document.file_name,
-                            doc_bytes
-                            )
-                        )
+                    doc = await Utils.createMedia(MediaType.DOCUMENT, msg.document.file_name, doc_bytes)
+                    media.append(doc)
 
             if media:
                 await Manager.send_media(usr, media, caption)
