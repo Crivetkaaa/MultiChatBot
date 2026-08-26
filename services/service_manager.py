@@ -37,6 +37,7 @@ class ServiceManager:
             if target_func == None:
                 print(f"Метод {method_name} не реализован")
                 return
+            await usr.last_message_time()
             await target_func(user_id, *args, **kwargs)
 
     async def send_message(self, usr:User, text: str):

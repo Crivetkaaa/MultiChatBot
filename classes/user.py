@@ -3,6 +3,7 @@ import base64
 from config import tg_usrs, vk_usrs
 from database import db
 from services.service_manager import Manager
+import time
 
 
 class User:
@@ -12,6 +13,10 @@ class User:
         self.in_message = False
         self.who_secret = None
         self.head = None
+        self.last_message = None
+
+    async def last_message_time(self):
+        self.last_message = time.time()
 
     def generateSecret(self, mes: str, bytes: int = 32):
         mes_code = base64.b64encode(mes.encode("utf-8")).decode("utf-8")
@@ -41,6 +46,7 @@ class User:
         self.in_message = False
         self.who_secret = None
         self.head = None
+        self.last_message = None
 
     async def err_end_chat(self, text:str):
         await self.end_chat()

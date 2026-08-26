@@ -7,6 +7,7 @@ import os
 from database import db
 from classes.user import User
 from config import vk_usrs, tg_usrs
+from services.closeChat import closeChat
 
 
 async def main():
@@ -24,9 +25,12 @@ async def main():
     try:
         await asyncio.gather(
             tg_main(),
-            vk_main()
+            vk_main(),
+
+            closeChat()
         )
     except Exception as e:
+        print(e)
         try:
             sys.exit(0)
         except SystemExit:
