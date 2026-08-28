@@ -56,7 +56,7 @@ class ServiceManager:
         full_text = await usr.finally_text()
         await self._route_and_send("sticker", usr, sticker, full_text)
 
-    async def info_for_user(self, usr:User, keyboard, text: str):
+    async def info_for_user(self, usr:User, text: str, keyboard=None):
         if "dms=" in usr.secret:
             params = {
                 "peer_id": usr.user_id,

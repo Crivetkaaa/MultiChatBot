@@ -1,5 +1,6 @@
 from .media import MediaType, Media, Sticker, StickerType
 import subprocess
+from functools import wraps
 
 class Utils:
     @staticmethod
@@ -37,3 +38,17 @@ class Utils:
         return Sticker(
             sticker_type, filename, s_bytes
         )
+    
+    @staticmethod
+    def split_text(func):
+        @wraps(func)
+        def wrapper(text, *args, **kwargs):
+            split_t = text.text.split(" ")         
+            if len(split_t) > 2:
+                split_t = split_t[1:3]
+            else:
+                split_t = [split_t[-1]]
+                
+            return func(text, *split_t, *args, **kwargs)
+            
+        return wrapper

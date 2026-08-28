@@ -11,6 +11,7 @@ from services.tg import tgService
 from resours import texts
 from classes.utils import Utils
 
+from functools import wraps
 
 async def check_secret(secret: str) -> bool:
     if len(secret) != 64:
@@ -31,23 +32,25 @@ async def status_handler(message: Message):
     if usr.in_message:
         await Manager.info_for_user(usr, f'{texts["status"]} {usr.who_secret}')
     else:
-        await Manager.info_for_user(usr, None, texts["not_in_chat"])
+        await Manager.info_for_user(usr, texts["not_in_chat"])
+
 
 
 @dp.message(Command("message"))
-async def message_handler(message: Message) -> None:
+@Utils.split_text
+async def message_handler(message: Message, secret: str = None, chat_name: str = None) -> None:
+    print(message.chat.id)
+    print(secret, chat_name)
+
     usr = await Users.get_user("tg", message.chat.id)
     if usr.in_message:
-        await Manager.info_for_user(usr, None, texts["err_new_chat"])
+        await Manager.info_for_user(usr, texts["err_new_chat"])
         return
 
-
-    _, secret_args = message.text.split(maxsplit=1)
-    print(secret_args)
-    if secret_args:
-        res = await Utils.check_secret(secret_args)
+    if secret:
+        res = await Utils.check_secret(secret)
         if not res:
-            await Manager.info_for_user(usr, None, texts["err_secret"])
+            await Manager.info_for_user(usr, texts["err_secret"])
             return
 
     usr_info = message.from_user
@@ -61,8 +64,11 @@ async def message_handler(message: Message) -> None:
     else:
         url = f"tg://user?id={usr_info.id}"
         
-    await usr.start_chat(secret_args, full_name, url, "tg")
-    await Manager.info_for_user(usr, None, texts["start_chat"])
+    await usr.start_chat(secret, full_name, url, "tg")
+    await Manager.info_for_user(usr, texts["start_chat"])
+
+    if chat_name:
+        await usr.addChat(chat_name)
 
 
 @dp.message(Command("quit"))
@@ -70,15 +76,15 @@ async def quit_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
     if usr.in_message:
         await usr.end_chat()
-        await Manager.info_for_user(usr, None, texts["end_chat"])
+        await Manager.info_for_user(usr, texts["end_chat"])
     else:
-        await Manager.info_for_user(usr, None, texts["not_in_chat"])
+        await Manager.info_for_user(usr, texts["not_in_chat"])
 
 
 @dp.message(Command("help"))
 async def tg_help_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-    await Manager.info_for_user(usr, None, texts["help"])
+    await Manager.info_for_user(usr, texts["help"])
 
 
 @dp.message()
@@ -87,64 +93,66 @@ async def echo_handler(message: Message, album: list[Message] = None) -> None:
         return
 
     usr = await Users.get_user("tg", message.chat.id)
-    
-    if usr.in_message:
-        try:
-            if message.voice:
-                audio = await tgService.download_file_tg(message.voice.file_id)
-                await Manager.send_audio(usr, audio)
+
+    if not usr.in_message: 
+        await Manager.info_for_user(usr, texts["not_in_chat"])
+        return
+
+    try:
+        if message.voice:
+            audio = await tgService.download_file_tg(message.voice.file_id)
+            await Manager.send_audio(usr, audio)
+            return
+
+        if message.sticker:
+            sticker = await tgService.download_file_tg(message.sticker.file_id)
+            if message.sticker.is_animated:
+                await Manager.info_for_user(usr, texts['err_sticker'])
                 return
+            elif message.sticker.is_video:
+                stic = await Utils.createSticker(StickerType.VIDEO, "s.webm", sticker)                                    
+            else:
+                stic = await Utils.createSticker(StickerType.PHOTO, "s.webp", sticker)
+            await Manager.send_sticker(usr, stic)
+            return
 
-            if message.sticker:
-                sticker = await tgService.download_file_tg(message.sticker.file_id)
-                if message.sticker.is_animated:
-                    pass
-                elif message.sticker.is_video:
-                    stic = await Utils.createSticker(StickerType.VIDEO, "s.webm", sticker)                                    
-                else:
-                    stic = await Utils.createSticker(StickerType.PHOTO, "s.webp", sticker)
-                await Manager.send_sticker(usr, stic)
-                return
+        messages = album if album else [message]
 
-            messages = album if album else [message]
+        media = []
+        caption = None
 
-            media = []
-            caption = None
+        for msg in messages:
+            if msg.caption:
+                caption = msg.caption
 
-            for msg in messages:
-                if msg.caption:
-                    caption = msg.caption
+            if msg.photo:
+                photo_bytes = await tgService.download_file_tg(msg.photo[-1].file_id)
+                photo = await Utils.createMedia(MediaType.PHOTO, "p.jpg", photo_bytes)
+                media.append(photo)
 
-                if msg.photo:
-                    photo_bytes = await tgService.download_file_tg(msg.photo[-1].file_id)
-                    photo = await Utils.createMedia(MediaType.PHOTO, "p.jpg", photo_bytes)
-                    media.append(photo)
+            elif msg.video:
+                video_bytes = await tgService.download_file_tg(msg.video.file_id)
+                video = await Utils.createMedia(MediaType.VIDEO, "v.mp4", video_bytes)
+                media.append(video)
 
-                elif msg.video:
-                    video_bytes = await tgService.download_file_tg(msg.video.file_id)
-                    video = await Utils.createMedia(MediaType.VIDEO, "v.mp4", video_bytes)
-                    media.append(video)
+            elif msg.document:
+                doc_bytes = await tgService.download_file_tg(msg.document.file_id)
+                doc = await Utils.createMedia(MediaType.DOCUMENT, msg.document.file_name, doc_bytes)
+                media.append(doc)
 
-                elif msg.document:
-                    doc_bytes = await tgService.download_file_tg(msg.document.file_id)
-                    doc = await Utils.createMedia(MediaType.DOCUMENT, msg.document.file_name, doc_bytes)
-                    media.append(doc)
+        if media:
+            await Manager.send_media(usr, media, caption)
+            return
+        
+        if message.text is not None:
+            await Manager.send_message(usr, message.text)
+            return
 
-            if media:
-                await Manager.send_media(usr, media, caption)
-                return
-            
-            if message.text is not None:
-                await Manager.send_message(usr, message.text)
-                return
-
-            await Manager.info_for_user(usr, None, texts["err_type"])
-            
-        except Exception as e:
-            await Manager.info_for_user(usr, None, texts["err"])
-            print(e)
-    else:
-        await Manager.info_for_user(usr, None, texts["not_in_chat"])
+        await Manager.info_for_user(usr, texts["err_type"])
+        
+    except Exception as e:
+        await Manager.info_for_user(usr, texts["err"])
+        print(e)
 
 
 async def main() -> None:

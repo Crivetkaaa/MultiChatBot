@@ -31,26 +31,32 @@ async def status_handler(message: Message):
     if usr.in_message:
         await Manager.info_for_user(usr, f'{texts["status"]} {usr.who_secret}')
     else:
-        await Manager.info_for_user(usr, None, texts["not_in_chat"])
+        await Manager.info_for_user(usr, texts["not_in_chat"])
 
 
-@bot.on.private_message(text="/message <secret>")
-async def message(message: Message, secret: str = None):
+@bot.on.private_message(text="/message <secret> <chat_name>")
+async def message(message: Message, secret: str = None, chat_name = None):
     usr = await Users.get_user("vk", message.peer_id) 
-    if not usr.in_message:
-        if secret != None:
-            res = await Utils.check_secret(secret)
-            if not res:
-                await Manager.info_for_user(usr, None, texts["err_secret"])
-                return 
-            
-        usr_info = await message.get_user(fields=["screen_name"])
-        full_name = usr_info.last_name + " " + usr_info.first_name
-        url = f"https://vk.ru/{usr_info.screen_name}"
-        await usr.start_chat(secret, full_name, url, "vk")
-        await Manager.info_for_user(usr, None, texts["start_chat"])
-    else:
-        await Manager.info_for_user(usr, None, texts["err_new_chat"])
+
+    if usr.in_message:
+        await Manager.info_for_user(usr, texts["err_new_chat"])
+        return
+
+    if secret != None:
+        res = await Utils.check_secret(secret)
+        if not res:
+            await Manager.info_for_user(usr, texts["err_secret"])
+            return 
+
+        
+    usr_info = await message.get_user(fields=["screen_name"])
+    full_name = usr_info.last_name + " " + usr_info.first_name
+    url = f"https://vk.ru/{usr_info.screen_name}"
+    await usr.start_chat(secret, full_name, url, "vk")
+    await Manager.info_for_user(usr, texts["start_chat"])
+    if chat_name:
+        await usr.addChat(chat_name)
+
 
 
 @bot.on.private_message(text="/quit")
@@ -59,22 +65,22 @@ async def default_handler(message: Message):
 
     if usr.in_message:
         await usr.end_chat()
-        await Manager.info_for_user(usr, None, texts["end_chat"])
+        await Manager.info_for_user(usr, texts["end_chat"])
     else: 
-        await Manager.info_for_user(usr, None, texts["not_in_chat"])
+        await Manager.info_for_user(usr, texts["not_in_chat"])
 
 
 @bot.on.private_message(text="/help")
 async def vk_help_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
-    await Manager.info_for_user(usr, None, texts["help"])
+    await Manager.info_for_user(usr, texts["help"])
 
 
 @bot.on.private_message()
 async def default_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
     if not usr.in_message:
-        await Manager.info_for_user(usr, None, texts["not_in_chat"])
+        await Manager.info_for_user(usr, texts["not_in_chat"])
         return
 
     msg_id = message.conversation_message_id
@@ -102,7 +108,7 @@ async def default_handler(message: Message):
                     return
 
                 if attach.video:
-                    await Manager.info_for_user(usr, None, texts["vk_video_err"])
+                    await Manager.info_for_user(usr, texts["vk_video_err"])
                     return
 
             media = []
@@ -125,10 +131,10 @@ async def default_handler(message: Message):
             await Manager.send_message(usr, message.text)
             return
 
-        await Manager.info_for_user(usr, None, texts["err_type"])
+        await Manager.info_for_user(usr, texts["err_type"])
 
     except Exception as e:
-        await Manager.info_for_user(usr, None, texts["err"])
+        await Manager.info_for_user(usr, texts["err"])
         print(f"Ошибка в обработчике ВК: {e}")
 
 
