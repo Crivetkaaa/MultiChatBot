@@ -38,11 +38,17 @@ class DataBase:
                 return row[0]
         return 0
 
-    async def addChat(self, user_secret: str, who_secret:str, chat_name: str):
-        async with self.conn.execute(
-            'INSERT INTO p2p(user_secret, who_secret, chat_name)VALUES(?, ?, ?)', 
-            (user_secret, who_secret, chat_name)) as _:
-            await self.conn.commit()
+    async def addChat(self, user_secret: str, who_secret: str, chat_name: str):
+        await self.conn.execute(
+            """
+            INSERT INTO p2p (user_secret, who_secret, chat_name) 
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_secret, who_secret) 
+            DO UPDATE SET chat_name = excluded.chat_name;
+            """, 
+            (user_secret, who_secret, chat_name)
+        )
+        await self.conn.commit()
 
     async def getChats(self, user_secret: str):
         async with self.conn.execute(

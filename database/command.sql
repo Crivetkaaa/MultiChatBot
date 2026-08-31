@@ -11,5 +11,6 @@ CREATE TABLE IF NOT EXISTS tg_users (
 CREATE TABLE IF NOT EXISTS p2p (
     user_secret TEXT,
     who_secret TEXT,
-    chat_name TEXT
+    chat_name TEXT,
+    UNIQUE (user_secret, who_secret)
 )
