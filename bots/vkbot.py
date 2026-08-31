@@ -6,7 +6,7 @@ from config import vk_bot as bot
 from services.vk import vkService
 from resours import texts
 from classes.media import MediaType, StickerType
-from classes.utils import Utils
+from utils.utils import Utils
 from utils.utilsVK import Utils as VKUtils
 from keyboards.keyboardsVK import KeyboardsVK
 from vkbottle.bot import MessageEvent

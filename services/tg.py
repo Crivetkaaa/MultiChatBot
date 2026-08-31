@@ -3,7 +3,7 @@ from aiogram.types import BufferedInputFile
 from aiogram.types import InputMediaPhoto, InputMediaVideo, InputMediaDocument, InputMediaSticker
 from classes.media import Media, MediaType, StickerType, Sticker
 from config import tg_bot
-from classes.utils import Utils
+from utils.utils import Utils
 
 class TgService:
     def __init__(self, tg_bot:Bot):

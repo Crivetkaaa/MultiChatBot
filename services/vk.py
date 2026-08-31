@@ -7,7 +7,7 @@ from classes.media import Media, MediaType, Sticker, StickerType
 import asyncio
 import vkbottle_types.objects as vt
 from config import vk_bot
-from classes.utils import Utils
+from utils.utils import Utils
 
 class VkService:
     def __init__(self, vk_bot: Bot):

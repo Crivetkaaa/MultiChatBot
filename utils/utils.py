@@ -1,4 +1,4 @@
-from .media import MediaType, Media, Sticker, StickerType
+from classes.media import MediaType, Media, Sticker, StickerType
 import subprocess
 from config import secret_len
 

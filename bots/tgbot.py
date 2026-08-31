@@ -9,7 +9,7 @@ from classes.media import MediaType, StickerType
 from services.service_manager import Manager
 from services.tg import tgService
 from resours import texts
-from classes.utils import Utils
+from utils.utils import Utils
 from utils.utilsTG import Utils as TGUtils
 from aiogram import Router
 from aiogram.types import CallbackQuery
