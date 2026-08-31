@@ -1,16 +1,18 @@
 import asyncio
 from bots.tgbot import main as tg_main
+from bots.tgbot import router
 from bots.vkbot import main as vk_main
 import logging
 import sys
 import os
 from database import db
 from classes.user import User
-from config import vk_usrs, tg_usrs
+from config import vk_usrs, tg_usrs, dp
 from services.closeChat import closeChat
 
 
 async def main():
+    dp.include_router(router)
     await db.connect()
 
     vk_res, tg_res = await db.getUsers()

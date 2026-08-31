@@ -1,6 +1,6 @@
 import secrets
 import base64
-from config import tg_usrs, vk_usrs
+from config import tg_usrs, vk_usrs, secret_len
 from database import db
 from services.service_manager import Manager
 import time
@@ -18,7 +18,7 @@ class User:
     async def last_message_time(self):
         self.last_message = time.time()
 
-    def generateSecret(self, mes: str, bytes: int = 32):
+    def generateSecret(self, mes: str, bytes: int = secret_len):
         mes_code = base64.b64encode(mes.encode("utf-8")).decode("utf-8")
         return mes_code + ":" + secrets.token_hex(bytes)
 
@@ -55,6 +55,9 @@ class User:
     async def addChat(self, chat_name: str):
         await db.addChat(self.secret, self.who_secret, chat_name)
 
+    async def userChats(self):
+        rows = await db.getChats(self.secret)
+        return rows
 
 class Users:
     @staticmethod

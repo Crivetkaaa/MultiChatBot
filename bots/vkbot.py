@@ -7,21 +7,41 @@ from services.vk import vkService
 from resours import texts
 from classes.media import MediaType, StickerType
 from classes.utils import Utils
+from keyboards.keyboardsVK import KeyboardsVK
+from vkbottle.bot import MessageEvent
+from vkbottle_types.events import GroupEventType
 
 
 processed_messages = set()
 
 
-async def check_secret(secret):
-    if len(secret) != 64:
-        return False
-    return True 
+@bot.on.raw_event(GroupEventType.MESSAGE_EVENT, dataclass=MessageEvent)
+async def callback_handler(event: MessageEvent):
+    usr = await Users.get_user("vk", event.object.user_id)
+    payload = event.payload or {}
+    raw_command = payload.get("cmd")
+
+    if not raw_command:
+        await Manager.send_message(usr, "Что-то пощло не так")
+        return
+
+    command, who_secret = raw_command.split("|")
+
+    match command:
+        case "start_chat":
+            full_name, url = await Utils.getFullNameVk(event)
+            await usr.start_chat(who_secret, full_name, url, "vk")
+            await Manager.info_for_user(usr, texts["start_chat"])
+        case _:
+            await Manager.info_for_user(usr, "бля")
+
+    await event.send_empty_answer()
 
 
 @bot.on.private_message(text=["/start", "начать"])
 async def start_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
-    text = texts["help"] + "\n\n" + f'{texts["start_bottom"]} {usr.secret}'
+    text = texts["help"] + "\n\n" + f'{texts["start_bottom"]} \n{usr.secret}'
     await Manager.info_for_user(usr, text)
     
 
@@ -48,26 +68,27 @@ async def message(message: Message, secret: str = None, chat_name = None):
             await Manager.info_for_user(usr, texts["err_secret"])
             return 
 
-        
-    usr_info = await message.get_user(fields=["screen_name"])
-    full_name = usr_info.last_name + " " + usr_info.first_name
-    url = f"https://vk.ru/{usr_info.screen_name}"
+
+    full_name, url = await Utils.getFullNameVk(message)
     await usr.start_chat(secret, full_name, url, "vk")
     await Manager.info_for_user(usr, texts["start_chat"])
+
     if chat_name:
         await usr.addChat(chat_name)
-
 
 
 @bot.on.private_message(text="/quit")
 async def default_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
 
+    chats = await usr.userChats()
+    keyboard = await KeyboardsVK.userChats(chats)
+
     if usr.in_message:
         await usr.end_chat()
-        await Manager.info_for_user(usr, texts["end_chat"])
+        await Manager.info_for_user(usr, texts["end_chat"], keyboard)
     else: 
-        await Manager.info_for_user(usr, texts["not_in_chat"])
+        await Manager.info_for_user(usr, texts["not_in_chat"], keyboard)
 
 
 @bot.on.private_message(text="/help")

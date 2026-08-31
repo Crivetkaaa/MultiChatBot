@@ -24,3 +24,4 @@ dp = Dispatcher()
 dp.message.middleware(AlbumMiddleware())
 session = AiohttpSession(proxy=URL)
 tg_bot = Bot(token=TG_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML), session=session)
+secret_len = 20

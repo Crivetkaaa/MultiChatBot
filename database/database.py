@@ -44,4 +44,13 @@ class DataBase:
             (user_secret, who_secret, chat_name)) as _:
             await self.conn.commit()
 
+    async def getChats(self, user_secret: str):
+        async with self.conn.execute(
+            'SELECT who_secret, chat_name FROM p2p WHERE user_secret = ?',
+            (user_secret,)
+        ) as c:
+            rows = await c.fetchall()
+            return rows
+        return None
+
 db = DataBase("db.db")

@@ -10,19 +10,41 @@ from services.service_manager import Manager
 from services.tg import tgService
 from resours import texts
 from classes.utils import Utils
+from aiogram import Router
+from aiogram.types import CallbackQuery
+from keyboards.keyboardsTG import KeybordsTG 
 
-from functools import wraps
 
-async def check_secret(secret: str) -> bool:
-    if len(secret) != 64:
-        return False
-    return True
+router = Router()
+
+
+@router.callback_query()
+async def callback(c: CallbackQuery):
+    usr = await Users.get_user("tg", c.from_user.id)
+
+    command, who_secret = c.data.split("|")
+    match command:
+        case "start_chat":
+            res = await Utils.check_secret(who_secret)
+            if not res:
+                await Manager.info_for_user(usr, texts["err_secret"])
+                return
+
+            full_name, url = await Utils.getFullNameTg(c)
+        
+            await usr.start_chat(who_secret, full_name, url, "tg")
+            await Manager.info_for_user(usr, texts["start_chat"])
+
+        case _:
+            await Manager.info_for_user(usr, "err")
+            
+    await c.answer()
 
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-    text = texts["help"] + "\n\n" + f'{texts["start_bottom"]} {usr.secret}'
+    text = texts["help"] + "\n\n" + f'{texts["start_bottom"]} \n{usr.secret}'
     await Manager.info_for_user(usr, text)
 
 
@@ -30,18 +52,14 @@ async def command_start_handler(message: Message) -> None:
 async def status_handler(message: Message):
     usr = await Users.get_user("tg", message.chat.id)
     if usr.in_message:
-        await Manager.info_for_user(usr, f'{texts["status"]} {usr.who_secret}')
+        await Manager.info_for_user(usr, f'{texts["status"]} \n{usr.who_secret}')
     else:
         await Manager.info_for_user(usr, texts["not_in_chat"])
-
 
 
 @dp.message(Command("message"))
 @Utils.split_text
 async def message_handler(message: Message, secret: str = None, chat_name: str = None) -> None:
-    print(message.chat.id)
-    print(secret, chat_name)
-
     usr = await Users.get_user("tg", message.chat.id)
     if usr.in_message:
         await Manager.info_for_user(usr, texts["err_new_chat"])
@@ -53,16 +71,7 @@ async def message_handler(message: Message, secret: str = None, chat_name: str =
             await Manager.info_for_user(usr, texts["err_secret"])
             return
 
-    usr_info = message.from_user
-    
-    last_name = usr_info.last_name or ""
-    first_name = usr_info.first_name or ""
-    full_name = f"{last_name} {first_name}".strip()
-    
-    if usr_info.username:
-        url = f"https://t.me/{usr_info.username}"
-    else:
-        url = f"tg://user?id={usr_info.id}"
+    full_name, url = await Utils.getFullNameTg(message)
         
     await usr.start_chat(secret, full_name, url, "tg")
     await Manager.info_for_user(usr, texts["start_chat"])
@@ -74,11 +83,15 @@ async def message_handler(message: Message, secret: str = None, chat_name: str =
 @dp.message(Command("quit"))
 async def quit_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
+
+    chats = await usr.userChats()
+    keyboard = await KeybordsTG.userChats(chats)
+
     if usr.in_message:
         await usr.end_chat()
-        await Manager.info_for_user(usr, texts["end_chat"])
+        await Manager.info_for_user(usr, texts["end_chat"], keyboard)
     else:
-        await Manager.info_for_user(usr, texts["not_in_chat"])
+        await Manager.info_for_user(usr, texts["not_in_chat"], keyboard)
 
 
 @dp.message(Command("help"))
