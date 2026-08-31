@@ -10,6 +10,7 @@ from services.service_manager import Manager
 from services.tg import tgService
 from resours import texts
 from classes.utils import Utils
+from utils.utilsTG import Utils as TGUtils
 from aiogram import Router
 from aiogram.types import CallbackQuery
 from keyboards.keyboardsTG import KeybordsTG 
@@ -30,7 +31,7 @@ async def callback(c: CallbackQuery):
                 await Manager.info_for_user(usr, texts["err_secret"])
                 return
 
-            full_name, url = await Utils.getFullNameTg(c)
+            full_name, url = await TGUtils.getFullName(c)
         
             await usr.start_chat(who_secret, full_name, url, "tg")
             await Manager.info_for_user(usr, texts["start_chat"])
@@ -58,7 +59,7 @@ async def status_handler(message: Message):
 
 
 @dp.message(Command("message"))
-@Utils.split_text
+@TGUtils.split_text
 async def message_handler(message: Message, secret: str = None, chat_name: str = None) -> None:
     usr = await Users.get_user("tg", message.chat.id)
     if usr.in_message:
@@ -71,7 +72,7 @@ async def message_handler(message: Message, secret: str = None, chat_name: str =
             await Manager.info_for_user(usr, texts["err_secret"])
             return
 
-    full_name, url = await Utils.getFullNameTg(message)
+    full_name, url = await TGUtils.getFullName(message)
         
     await usr.start_chat(secret, full_name, url, "tg")
     await Manager.info_for_user(usr, texts["start_chat"])

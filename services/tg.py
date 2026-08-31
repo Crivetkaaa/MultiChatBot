@@ -3,6 +3,7 @@ from aiogram.types import BufferedInputFile
 from aiogram.types import InputMediaPhoto, InputMediaVideo, InputMediaDocument, InputMediaSticker
 from classes.media import Media, MediaType, StickerType, Sticker
 from config import tg_bot
+from classes.utils import Utils
 
 class TgService:
     def __init__(self, tg_bot:Bot):
@@ -52,7 +53,14 @@ class TgService:
 
         return m
 
+    async def sticker_type(self, sticker: Sticker) -> Sticker:
+        if sticker.s_type == StickerType.VIDEO:
+            sticker.m_bytes = await Utils.webm_to_gif(sticker.m_bytes)
+            sticker.filename = "sticker.gif"
+        return sticker
+
     async def sticker_update(self, user_id:int, sticker: Sticker, text:str):
+        sticker = await self.sticker_type(sticker)
         file = BufferedInputFile(
             file=sticker.m_bytes,
             filename=sticker.filename

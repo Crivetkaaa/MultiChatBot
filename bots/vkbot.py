@@ -7,6 +7,7 @@ from services.vk import vkService
 from resours import texts
 from classes.media import MediaType, StickerType
 from classes.utils import Utils
+from utils.utilsVK import Utils as VKUtils
 from keyboards.keyboardsVK import KeyboardsVK
 from vkbottle.bot import MessageEvent
 from vkbottle_types.events import GroupEventType
@@ -29,7 +30,7 @@ async def callback_handler(event: MessageEvent):
 
     match command:
         case "start_chat":
-            full_name, url = await Utils.getFullNameVk(event)
+            full_name, url = await VKUtils.getFullName(event)
             await usr.start_chat(who_secret, full_name, url, "vk")
             await Manager.info_for_user(usr, texts["start_chat"])
         case _:
@@ -69,7 +70,7 @@ async def message(message: Message, secret: str = None, chat_name = None):
             return 
 
 
-    full_name, url = await Utils.getFullNameVk(message)
+    full_name, url = await VKUtils.getFullName(message)
     await usr.start_chat(secret, full_name, url, "vk")
     await Manager.info_for_user(usr, texts["start_chat"])
 
