@@ -14,6 +14,7 @@ from utils.utilsTG import Utils as TGUtils
 from aiogram import Router
 from aiogram.types import CallbackQuery
 from keyboards.keyboardsTG import KeybordsTG 
+from .basebot import BaseBot
 
 
 router = Router()
@@ -22,64 +23,28 @@ router = Router()
 @router.callback_query()
 async def callback(c: CallbackQuery):
     usr = await Users.get_user("tg", c.from_user.id)
-
-    command, who_secret = c.data.split("|")
-    match command:
-        case "start_chat":
-            res = await Utils.check_secret(who_secret)
-            if not res:
-                await Manager.info_for_user(usr, texts["err_secret"])
-                return
-
-            full_name, url = await TGUtils.getFullName(c)
-        
-            await usr.start_chat(who_secret, full_name, url, "tg")
-            await Manager.info_for_user(usr, texts["start_chat"])
-
-        case _:
-            await Manager.info_for_user(usr, "err")
-            
+    full_name, url = await TGUtils.getFullName(c)
+    await BaseBot.callback_handler(usr, c.data, full_name, url, "tg")            
     await c.answer()
 
 
 @dp.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
+async def start_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-    text = texts["help"] + "\n\n" + f'{texts["start_bottom"]} \n{usr.secret}'
-    await Manager.info_for_user(usr, text)
+    await BaseBot.start_handler(usr) 
 
 
 @dp.message(Command("status"))
 async def status_handler(message: Message):
     usr = await Users.get_user("tg", message.chat.id)
-    if usr.in_message:
-        await Manager.info_for_user(usr, f'{texts["status"]} \n{usr.who_secret}')
-    else:
-        await Manager.info_for_user(usr, texts["not_in_chat"])
-
+    await BaseBot.status_handler(usr)
 
 @dp.message(Command("message"))
 @TGUtils.split_text
 async def message_handler(message: Message, secret: str = None, chat_name: str = None) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-    if usr.in_message:
-        await Manager.info_for_user(usr, texts["err_new_chat"])
-        return
-
-    if secret:
-        res = await Utils.check_secret(secret)
-        if not res:
-            await Manager.info_for_user(usr, texts["err_secret"])
-            return
-
     full_name, url = await TGUtils.getFullName(message)
-        
-    await usr.start_chat(secret, full_name, url, "tg")
-    await Manager.info_for_user(usr, texts["start_chat"])
-
-    if chat_name:
-        await usr.addChat(chat_name)
-
+    await BaseBot.message_handler(usr, secret, chat_name, full_name, url, "tg")
 
 @dp.message(Command("quit"))
 async def quit_handler(message: Message) -> None:
@@ -88,21 +53,16 @@ async def quit_handler(message: Message) -> None:
     chats = await usr.userChats()
     keyboard = await KeybordsTG.userChats(chats)
 
-    if usr.in_message:
-        await usr.end_chat()
-        await Manager.info_for_user(usr, texts["end_chat"], keyboard)
-    else:
-        await Manager.info_for_user(usr, texts["not_in_chat"], keyboard)
+    await BaseBot.quit_handler(usr, keyboard)
 
 
 @dp.message(Command("help"))
-async def tg_help_handler(message: Message) -> None:
+async def help_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-    await Manager.info_for_user(usr, texts["help"])
-
+    await BaseBot.help_handler(usr)
 
 @dp.message()
-async def echo_handler(message: Message, album: list[Message] = None) -> None:
+async def default_handler(message: Message, album: list[Message] = None) -> None:
     if message.media_group_id and album is None:
         return
 

@@ -25,9 +25,9 @@ class Utils:
             split_t = text.text.split(" ", maxsplit=2)         
             if len(split_t) > 2:
                 split_t = split_t[1:3]
-            else:
+            elif len(split_t) == 2:
                 split_t = [split_t[-1]]
-                
+            else: split_t = []
             return func(text, *split_t, *args, **kwargs)
             
         return wrapper

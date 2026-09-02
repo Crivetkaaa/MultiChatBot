@@ -50,7 +50,7 @@ class User:
 
     async def err_end_chat(self, text:str):
         await self.end_chat()
-        await Manager.info_for_user(self, None, text)
+        await Manager.info_for_user(self, text)
 
     async def addChat(self, chat_name: str):
         await db.addChat(self.secret, self.who_secret, chat_name)

@@ -11,7 +11,7 @@ from utils.utilsVK import Utils as VKUtils
 from keyboards.keyboardsVK import KeyboardsVK
 from vkbottle.bot import MessageEvent
 from vkbottle_types.events import GroupEventType
-
+from bots.basebot import BaseBot
 
 processed_messages = set()
 
@@ -19,83 +19,54 @@ processed_messages = set()
 @bot.on.raw_event(GroupEventType.MESSAGE_EVENT, dataclass=MessageEvent)
 async def callback_handler(event: MessageEvent):
     usr = await Users.get_user("vk", event.object.user_id)
-    payload = event.payload or {}
-    raw_command = payload.get("cmd")
-
-    if not raw_command:
-        await Manager.send_message(usr, "Что-то пощло не так")
-        return
-
-    command, who_secret = raw_command.split("|")
-
-    match command:
-        case "start_chat":
-            full_name, url = await VKUtils.getFullName(event)
-            await usr.start_chat(who_secret, full_name, url, "vk")
-            await Manager.info_for_user(usr, texts["start_chat"])
-        case _:
-            await Manager.info_for_user(usr, "бля")
-
+    raw_command = event.payload.get("cmd")
+    full_name, url = await VKUtils.getFullName(event)
+    await BaseBot.callback_handler(usr, raw_command, full_name, url, "vk")
     await event.send_empty_answer()
 
 
 @bot.on.private_message(text=["/start", "начать"])
 async def start_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
-    text = texts["help"] + "\n\n" + f'{texts["start_bottom"]} \n{usr.secret}'
-    await Manager.info_for_user(usr, text)
+    await BaseBot.start_handler(usr)
     
 
 @bot.on.private_message(text="/status")
 async def status_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
-    if usr.in_message:
-        await Manager.info_for_user(usr, f'{texts["status"]} {usr.who_secret}')
-    else:
-        await Manager.info_for_user(usr, texts["not_in_chat"])
+    await BaseBot.status_handler(usr)
 
 
 @bot.on.private_message(text="/message <secret> <chat_name>")
-async def message(message: Message, secret: str = None, chat_name = None):
+async def message_full_info(message: Message, secret: str = None, chat_name = None):
+    await message_support(message, secret, chat_name)
+
+@bot.on.private_message(text="/message <secret>")
+async def message_secret(message: Message, secret: str = None):
+    await message_support(message, secret)
+
+@bot.on.private_message(text="/message")
+async def message(message: Message):
+    await message_support(message)
+
+async def message_support(message:Message, secret:str=None, chat_name:str=None):
     usr = await Users.get_user("vk", message.peer_id) 
-
-    if usr.in_message:
-        await Manager.info_for_user(usr, texts["err_new_chat"])
-        return
-
-    if secret != None:
-        res = await Utils.check_secret(secret)
-        if not res:
-            await Manager.info_for_user(usr, texts["err_secret"])
-            return 
-
-
     full_name, url = await VKUtils.getFullName(message)
-    await usr.start_chat(secret, full_name, url, "vk")
-    await Manager.info_for_user(usr, texts["start_chat"])
-
-    if chat_name:
-        await usr.addChat(chat_name)
-
+    await BaseBot.message_handler(usr, secret, chat_name, full_name, url, "vk")
+    
 
 @bot.on.private_message(text="/quit")
-async def default_handler(message: Message):
+async def quit_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
-
     chats = await usr.userChats()
     keyboard = await KeyboardsVK.userChats(chats)
-
-    if usr.in_message:
-        await usr.end_chat()
-        await Manager.info_for_user(usr, texts["end_chat"], keyboard)
-    else: 
-        await Manager.info_for_user(usr, texts["not_in_chat"], keyboard)
+    await BaseBot.quit_handler(usr, keyboard)
 
 
 @bot.on.private_message(text="/help")
-async def vk_help_handler(message: Message):
+async def help_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
-    await Manager.info_for_user(usr, texts["help"])
+    await BaseBot.help_handler(usr)
 
 
 @bot.on.private_message()
