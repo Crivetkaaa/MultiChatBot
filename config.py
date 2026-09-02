@@ -15,6 +15,9 @@ load_dotenv()
 vk_usrs = {}
 tg_usrs = {}
 
+usrs = [vk_usrs, tg_usrs]
+mes = ["vk", "tg"]
+
 VK_TOKEN = os.getenv("token")
 vk_bot = VKBot(token=VK_TOKEN)
 

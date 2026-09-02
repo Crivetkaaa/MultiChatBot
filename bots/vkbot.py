@@ -20,6 +20,7 @@ processed_messages = set()
 async def callback_handler(event: MessageEvent):
     usr = await Users.get_user("vk", event.object.user_id)
     raw_command = event.payload.get("cmd")
+    print(raw_command)
     full_name, url = await VKUtils.getFullName(event)
     await BaseBot.callback_handler(usr, raw_command, full_name, url, "vk")
     await event.send_empty_answer()

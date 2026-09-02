@@ -17,13 +17,10 @@ class DataBase:
         await self.conn.executescript(text) 
         await self.conn.commit()
 
-    async def getUsers(self) -> tuple[Iterable[Row], Iterable[Row]]:
-        async with self.conn.execute("SELECT vk_id, user_secret FROM vk_users") as c:
-            vk_result = await c.fetchall()
-        async with self.conn.execute("SELECT tg_id, user_secret FROM tg_users") as c:
-            tg_result = await c.fetchall()
-
-        return vk_result, tg_result
+    async def getUsers(self, mes: str) -> tuple[Iterable[Row], Iterable[Row]]:
+        async with self.conn.execute(f"SELECT {mes}_id, user_secret FROM {mes}_users") as c:
+            result = await c.fetchall()
+        return result
 
     async def createUser(self, mes: str, mes_id: int, user_secret: str):
         async with self.conn.execute_insert(

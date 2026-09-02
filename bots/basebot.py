@@ -56,7 +56,8 @@ class BaseBot:
 
     @staticmethod
     async def callback_handler(usr: User, raw_command: str, full_name: str, url: str, mes: str):
-        split_command = raw_command.split("|")[0]
+        print(raw_command)
+        split_command = raw_command.split("|")
         match split_command[0]:
             case "start_chat":
                 who_secret = split_command[1]

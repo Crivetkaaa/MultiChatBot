@@ -7,23 +7,24 @@ import sys
 import os
 from database import db
 from classes.user import User
-from config import vk_usrs, tg_usrs, dp
+from config import usrs, mes, dp
 from services.closeChat import closeChat
 
+
+async def usersList(list_usrs, users):
+    for user_id, secret in users:
+        print(user_id, secret)
+        list_usrs[user_id] = User(user_id, secret)
 
 async def main():
     dp.include_router(router)
     await db.connect()
 
-    vk_res, tg_res = await db.getUsers()
-    for vr in vk_res:
-        vk_id, secret = vr[0], vr[1]
-        vk_usrs[vk_id] = User(vk_id, secret)
+    for list_usrs, m in zip(usrs, mes):
+        res = await db.getUsers(m)
 
-    for tr in tg_res:
-        tg_id, secret = tr[0], tr[1]
-        tg_usrs[tg_id] = User(tg_id, secret)
-    
+        await usersList(list_usrs, res)
+
     try:
         await asyncio.gather(
             tg_main(),
