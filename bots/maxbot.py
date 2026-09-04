@@ -112,9 +112,6 @@ async def default_hendler(event: MessageCreated):
         await Manager.info_for_user(usr, texts["err"])
 
 
-
-
-
 async def main():
     print("MaxBot запущен...")
     await dp.start_polling(bot)
