@@ -1,6 +1,7 @@
 import aiosqlite
 from aiosqlite import Row
 from collections.abc import Iterable
+from config import max_keyboards_len
 
 class DataBase:
 
@@ -54,9 +55,9 @@ class DataBase:
             WHERE user_secret = ?
             AND id > ?
             ORDER BY id
-            LIMIT 9
+            LIMIT ?
             """,
-            (user_secret, last_id)
+            (user_secret, last_id, max_keyboards_len)
         ) as c:
             rows = await c.fetchall()
             return rows

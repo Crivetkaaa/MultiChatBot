@@ -4,6 +4,7 @@ from services.services_config import Manager
 from utils.utils import Utils
 from keyboards.keyboards import Keyboards
 from database.database import db
+from config import max_keyboards_len
 
 
 class BaseBot:
@@ -46,9 +47,9 @@ class BaseBot:
             await usr.addChat(chat_name)
 
     @staticmethod
-    async def quit_handler(usr: User, last_id: int=0):
+    async def quit_handler(usr: User, last_id: int=0, first=True):
         chats = await db.getChats(usr.secret, last_id)
-        keyboard = await Keyboards.userChats(chats, usr.user_mes)
+        keyboard = await Keyboards.userChats(chats, usr.user_mes, first)
         if usr.in_message:
             await usr.end_chat()
             await Manager.info_for_user(usr, texts["end_chat"], keyboard)
@@ -69,7 +70,11 @@ class BaseBot:
 
             case "next_page":
                 last_id = split_command[1]
-                await BaseBot.quit_handler(usr, last_id)
+                await BaseBot.quit_handler(usr, last_id, False)
+
+            case "back_page":
+                first_id = int(split_command[1]) - max_keyboards_len-1
+                await BaseBot.quit_handler(usr, first_id, False)
             case _:
                 await Manager.info_for_user(usr, "err")
             

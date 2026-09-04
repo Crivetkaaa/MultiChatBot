@@ -1,15 +1,22 @@
-class BaseKeyboards:
+from abc import ABC, abstractmethod
+
+class BaseKeyboards(ABC):
+
     @staticmethod
+    @abstractmethod
     async def createInlineKeyboars():
-        pass
-
+        ...
     @staticmethod
+    @abstractmethod
     async def addCallbackButton(kb, text: str, callback: str) -> None:
-        pass
-    @staticmethod
-    async def adjust(kb, button: int = 1) -> None:
-        pass
+        ...
 
     @staticmethod
+    @abstractmethod
+    async def adjust(kb, button: int = 1) -> None:
+        ...
+
+    @staticmethod
+    @abstractmethod
     async def returnKeyboard(kb):
-        pass
+        ...
