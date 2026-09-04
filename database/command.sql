@@ -8,6 +8,11 @@ CREATE TABLE IF NOT EXISTS tg_users (
     user_secret TEXT
 );
 
+CREATE TABLE IF NOT EXISTS mx_users (
+    mx_id INTEGER,
+    user_secret TEXT
+);
+
 CREATE TABLE IF NOT EXISTS p2p (
     user_secret TEXT,
     who_secret TEXT,

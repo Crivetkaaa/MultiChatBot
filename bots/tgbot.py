@@ -6,8 +6,7 @@ from config import tg_bot as bot
 from config import dp
 from classes.user import Users
 from classes.media import MediaType, StickerType
-from services.service_manager import Manager
-from services.tg import tgService
+from services.services_config import Manager
 from resours import texts
 from utils.utils import Utils
 from utils.utilsTG import Utils as TGUtils
@@ -74,12 +73,12 @@ async def default_handler(message: Message, album: list[Message] = None) -> None
 
     try:
         if message.voice:
-            audio = await tgService.download_file_tg(message.voice.file_id)
+            audio = await Manager.tg.download_file_tg(message.voice.file_id)
             await Manager.send_audio(usr, audio)
             return
 
         if message.sticker:
-            sticker = await tgService.download_file_tg(message.sticker.file_id)
+            sticker = await Manager.tg.download_file_tg(message.sticker.file_id)
             if message.sticker.is_animated:
                 await Manager.info_for_user(usr, texts['err_sticker'])
                 return
@@ -100,17 +99,17 @@ async def default_handler(message: Message, album: list[Message] = None) -> None
                 caption = msg.caption
 
             if msg.photo:
-                photo_bytes = await tgService.download_file_tg(msg.photo[-1].file_id)
+                photo_bytes = await Manager.tg.download_file_tg(msg.photo[-1].file_id)
                 photo = await Utils.createMedia(MediaType.PHOTO, "p.jpg", photo_bytes)
                 media.append(photo)
 
             elif msg.video:
-                video_bytes = await tgService.download_file_tg(msg.video.file_id)
+                video_bytes = await Manager.tg.download_file_tg(msg.video.file_id)
                 video = await Utils.createMedia(MediaType.VIDEO, "v.mp4", video_bytes)
                 media.append(video)
 
             elif msg.document:
-                doc_bytes = await tgService.download_file_tg(msg.document.file_id)
+                doc_bytes = await Manager.tg.download_file_tg(msg.document.file_id)
                 doc = await Utils.createMedia(MediaType.DOCUMENT, msg.document.file_name, doc_bytes)
                 media.append(doc)
 

@@ -1,9 +1,8 @@
 import asyncio 
 from classes.user import Users
 from vkbottle.bot import Message
-from services.service_manager import Manager
+from services.services_config import Manager
 from config import vk_bot as bot
-from services.vk import vkService
 from resours import texts
 from classes.media import MediaType, StickerType
 from utils.utils import Utils
@@ -91,12 +90,12 @@ async def default_handler(message: Message):
         if full_attachments:
             for attach in full_attachments:
                 if attach.audio_message:
-                    audio = await vkService.download_audio_vk(attach.audio_message)
+                    audio = await Manager.vk.download_audio_vk(attach.audio_message)
                     await Manager.send_audio(usr, audio)
                     return
 
                 if attach.sticker:
-                    sticker = await vkService.download_sticker_vk(attach.sticker.sticker_id)
+                    sticker = await Manager.vk.download_sticker_vk(attach.sticker.sticker_id)
                     stic = await Utils.createSticker(StickerType.PHOTO, "s.png", sticker)
                     await Manager.send_sticker(usr, stic)
                     return
@@ -108,12 +107,12 @@ async def default_handler(message: Message):
             media = []
             for attach in full_attachments:
                 if attach.photo:
-                    photo_bytes = await vkService.download_photo_vk(attach.photo)
+                    photo_bytes = await Manager.vk.download_photo_vk(attach.photo)
                     photo = await Utils.createMedia(MediaType.PHOTO, "photo.jpg", photo_bytes)
                     media.append(photo)
 
                 elif attach.doc:
-                    doc_bytes = await vkService.download_doc_vk(attach.doc)
+                    doc_bytes = await Manager.vk.download_doc_vk(attach.doc)
                     doc = await Utils.createMedia(MediaType.DOCUMENT, attach.doc.title, doc_bytes)
                     media.append(doc)
 

@@ -1,6 +1,6 @@
 from classes.user import User
 from resours import texts
-from services.service_manager import Manager
+from services.services_config import Manager
 from utils.utils import Utils
 
 class BaseBot:
@@ -56,7 +56,6 @@ class BaseBot:
 
     @staticmethod
     async def callback_handler(usr: User, raw_command: str, full_name: str, url: str, mes: str):
-        print(raw_command)
         split_command = raw_command.split("|")
         match split_command[0]:
             case "start_chat":
@@ -65,6 +64,3 @@ class BaseBot:
             case _:
                 await Manager.info_for_user(usr, "err")
             
-        
-
-

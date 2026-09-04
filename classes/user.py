@@ -1,8 +1,8 @@
 import secrets
 import base64
-from config import tg_usrs, vk_usrs, secret_len
+from config import tg_usrs, vk_usrs, mx_usrs, secret_len
 from database import db
-from services.service_manager import Manager
+from services.services_config import Manager
 import time
 
 
@@ -67,6 +67,9 @@ class Users:
 
         elif mes == "tg":
             return await Users.get_user_tg(user_id)
+
+        elif mes == "mx":
+            return await Users.get_user_mx(user_id)       
         
     @staticmethod
     async def get_user_vk(user_id: int) -> User:
@@ -83,3 +86,11 @@ class Users:
             tg_usrs[user_id] = usr
             await usr.create("tg")
         return tg_usrs[user_id]
+
+    @staticmethod
+    async def get_user_mx(user_id: int) -> User:
+        if user_id not in mx_usrs:
+            usr = User(user_id, mes="mx")
+            mx_usrs[user_id] = usr
+            await usr.create("mx")
+        return mx_usrs[user_id]

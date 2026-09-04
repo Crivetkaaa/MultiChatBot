@@ -21,13 +21,15 @@ class Utils:
     @staticmethod
     def split_text(func):
         @wraps(func)
-        def wrapper(text, *args, **kwargs):
+        async def wrapper(text, *args, **kwargs):
             split_t = text.text.split(" ", maxsplit=2)         
+            secret = None
+            chat_name = None
+            
+            if len(split_t) > 1:
+                secret = split_t[1]
             if len(split_t) > 2:
-                split_t = split_t[1:3]
-            elif len(split_t) == 2:
-                split_t = [split_t[-1]]
-            else: split_t = []
-            return func(text, *split_t, *args, **kwargs)
+                chat_name = split_t[2]
+                return await func(text, secret, chat_name, *args, **kwargs)
             
         return wrapper

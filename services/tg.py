@@ -2,7 +2,6 @@ from aiogram import Bot
 from aiogram.types import BufferedInputFile
 from aiogram.types import InputMediaPhoto, InputMediaVideo, InputMediaDocument, InputMediaSticker
 from classes.media import Media, MediaType, StickerType, Sticker
-from config import tg_bot
 from utils.utils import Utils
 
 class TgService:
@@ -85,5 +84,3 @@ class TgService:
 
     async def info_for_user(self, user_id, text, keyboard=None):
         await self.bot.send_message(user_id, text, reply_markup=keyboard) 
-
-tgService = TgService(tg_bot)

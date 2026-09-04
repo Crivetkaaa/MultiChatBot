@@ -2,6 +2,7 @@ import asyncio
 from bots.tgbot import main as tg_main
 from bots.tgbot import router
 from bots.vkbot import main as vk_main
+from bots.maxbot import main as mx_main
 import logging
 import sys
 import os
@@ -13,7 +14,6 @@ from services.closeChat import closeChat
 
 async def usersList(list_usrs, users):
     for user_id, secret in users:
-        print(user_id, secret)
         list_usrs[user_id] = User(user_id, secret)
 
 async def main():
@@ -29,6 +29,7 @@ async def main():
         await asyncio.gather(
             tg_main(),
             vk_main(),
+            mx_main(),
 
             closeChat()
         )

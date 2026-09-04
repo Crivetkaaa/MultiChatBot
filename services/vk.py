@@ -6,7 +6,6 @@ import aiohttp
 from classes.media import Media, MediaType, Sticker, StickerType
 import asyncio
 import vkbottle_types.objects as vt
-from config import vk_bot
 from utils.utils import Utils
 
 class VkService:
@@ -114,5 +113,3 @@ class VkService:
 
     async def info_for_user(self, **params):
         await self.bot.api.messages.send(**params)
-
-vkService = VkService(vk_bot)
