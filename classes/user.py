@@ -14,6 +14,7 @@ class User:
         self.who_secret = None
         self.head = None
         self.last_message = None
+        self.user_mes = mes
 
     async def last_message_time(self):
         self.last_message = time.time()

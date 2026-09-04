@@ -7,7 +7,6 @@ from resours import texts
 from classes.media import MediaType, StickerType
 from utils.utils import Utils
 from utils.utilsVK import Utils as VKUtils
-from keyboards.keyboardsVK import KeyboardsVK
 from vkbottle.bot import MessageEvent
 from vkbottle_types.events import GroupEventType
 from bots.basebot import BaseBot
@@ -19,7 +18,6 @@ processed_messages = set()
 async def callback_handler(event: MessageEvent):
     usr = await Users.get_user("vk", event.object.user_id)
     raw_command = event.payload.get("cmd")
-    print(raw_command)
     full_name, url = await VKUtils.getFullName(event)
     await BaseBot.callback_handler(usr, raw_command, full_name, url, "vk")
     await event.send_empty_answer()
@@ -58,9 +56,7 @@ async def message_support(message:Message, secret:str=None, chat_name:str=None):
 @bot.on.private_message(text="/quit")
 async def quit_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
-    chats = await usr.userChats()
-    keyboard = await KeyboardsVK.userChats(chats)
-    await BaseBot.quit_handler(usr, keyboard)
+    await BaseBot.quit_handler(usr)
 
 
 @bot.on.private_message(text="/help")

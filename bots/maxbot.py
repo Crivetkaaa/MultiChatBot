@@ -6,7 +6,6 @@ from classes.user import Users
 from bots.basebot import BaseBot
 from utils.utilsMAX import Utils as MAXUtils
 from database.database import db
-from keyboards.keyboardsMAX import KeyboardsMAX
 from maxapi.types.updates.message_callback import MessageCallback
 from services.services_config import Manager
 from resours import texts
@@ -44,9 +43,7 @@ async def status_handler(event: MessageCreated):
 @dp.message_created(Command("quit"))
 async def quit_handler(event: MessageCreated):
     usr = await Users.get_user("mx", event.get_ids()[1])
-    chats = await db.getChats(usr.secret)
-    keyboard = await KeyboardsMAX.userChats(chats)  
-    await BaseBot.quit_handler(usr, keyboard)
+    await BaseBot.quit_handler(usr)
 
 
 @dp.message_created(Command("message"))
@@ -76,7 +73,6 @@ async def default_hendler(event: MessageCreated):
     try:
         for attach in attachments:
             if attach.type == "sticker":
-                print(attach)
                 sticker_bytes = await Manager.mx.download_file(attach.payload.url)
                 sticker = await Utils.createSticker(StickerType.PHOTO, "p.jpg", sticker_bytes)
                 await Manager.send_sticker(usr, sticker)
@@ -98,7 +94,6 @@ async def default_hendler(event: MessageCreated):
                 file = await Utils.createMedia(MediaType.DOCUMENT, attach.filename, file_bytes)
                 media.append(file)
 
-            print(attach.type)
                 
         if media:
             await Manager.send_media(usr, media, event.message.body.text)

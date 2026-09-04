@@ -2,6 +2,9 @@ from classes.user import User
 from resours import texts
 from services.services_config import Manager
 from utils.utils import Utils
+from keyboards.keyboards import Keyboards
+from database.database import db
+
 
 class BaseBot:
     @staticmethod
@@ -43,7 +46,9 @@ class BaseBot:
             await usr.addChat(chat_name)
 
     @staticmethod
-    async def quit_handler(usr: User, keyboard=None):
+    async def quit_handler(usr: User, last_id: int=0):
+        chats = await db.getChats(usr.secret, last_id)
+        keyboard = await Keyboards.userChats(chats, usr.user_mes)
         if usr.in_message:
             await usr.end_chat()
             await Manager.info_for_user(usr, texts["end_chat"], keyboard)
@@ -61,6 +66,10 @@ class BaseBot:
             case "start_chat":
                 who_secret = split_command[1]
                 await BaseBot.message_handler(usr, who_secret, None, full_name, url, mes)
+
+            case "next_page":
+                last_id = split_command[1]
+                await BaseBot.quit_handler(usr, last_id)
             case _:
                 await Manager.info_for_user(usr, "err")
             

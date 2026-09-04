@@ -12,7 +12,6 @@ from utils.utils import Utils
 from utils.utilsTG import Utils as TGUtils
 from aiogram import Router
 from aiogram.types import CallbackQuery
-from keyboards.keyboardsTG import KeybordsTG 
 from .basebot import BaseBot
 
 
@@ -48,11 +47,7 @@ async def message_handler(message: Message, secret: str = None, chat_name: str =
 @dp.message(Command("quit"))
 async def quit_handler(message: Message) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-
-    chats = await usr.userChats()
-    keyboard = await KeybordsTG.userChats(chats)
-
-    await BaseBot.quit_handler(usr, keyboard)
+    await BaseBot.quit_handler(usr)
 
 
 @dp.message(Command("help"))

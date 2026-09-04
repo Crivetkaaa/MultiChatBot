@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS mx_users (
 );
 
 CREATE TABLE IF NOT EXISTS p2p (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_secret TEXT,
     who_secret TEXT,
     chat_name TEXT,

@@ -1,15 +1,20 @@
 from vkbottle import Keyboard, Callback
+from .baseKeyboards import BaseKeyboards
 
-class KeyboardsVK:
+class KeyboardsVK(BaseKeyboards):
+    @staticmethod
+    async def createInlineKeyboars() -> Keyboard:
+        return Keyboard(inline=True)
 
     @staticmethod
-    async def userChats(chats):
-        keyboard = Keyboard(inline=True)
-        for secret, chat_name in chats:
-            callback = f"start_chat|{secret}"
-            
-            # Pass the Text object inside keyboard.add()
-            keyboard.add(Callback(chat_name, payload={"cmd": callback}))
-            keyboard.row()
+    async def addCallbackButton(kb: Keyboard, text: str, callback: str) -> None:
+        kb.add(Callback(text, payload={"cmd": callback}))
+        kb.row()
 
-        return keyboard
+    @staticmethod
+    async def adjust(kb: Keyboard, button: int = 1):
+        pass
+
+    @staticmethod
+    async def returnKeyboard(kb: Keyboard):
+        return kb

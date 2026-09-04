@@ -47,10 +47,16 @@ class DataBase:
         )
         await self.conn.commit()
 
-    async def getChats(self, user_secret: str):
+    async def getChats(self, user_secret: str, last_id: int=0) -> Iterable[Row] | None:
         async with self.conn.execute(
-            'SELECT who_secret, chat_name FROM p2p WHERE user_secret = ?',
-            (user_secret,)
+            """SELECT id, who_secret, chat_name
+            FROM p2p
+            WHERE user_secret = ?
+            AND id > ?
+            ORDER BY id
+            LIMIT 9
+            """,
+            (user_secret, last_id)
         ) as c:
             rows = await c.fetchall()
             return rows

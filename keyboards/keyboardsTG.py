@@ -1,13 +1,19 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from .baseKeyboards import BaseKeyboards
 
-class KeybordsTG:
+class KeybordsTG(BaseKeyboards):
     @staticmethod
-    async def userChats(chats):
-        builder = InlineKeyboardBuilder()
+    async def createInlineKeyboars() -> InlineKeyboardBuilder:
+        return InlineKeyboardBuilder()
+    
+    @staticmethod
+    async def addCallbackButton(kb: InlineKeyboardBuilder, text: str, callback: str) -> InlineKeyboardBuilder:
+        kb.button(text=text, callback_data=callback)
 
-        for secret, chat_name in chats:
-            callback = f"start_chat|{secret}"
-            builder.button(text=chat_name, callback_data=callback)
-        builder.adjust(1)
+    @staticmethod
+    async def adjust(kb:InlineKeyboardBuilder, button:int = 1):
+        kb.adjust(button)
 
-        return builder.as_markup()
+    @staticmethod
+    async def returnKeyboard(kb: InlineKeyboardBuilder):
+        return kb.as_markup()

@@ -12,9 +12,9 @@ from config import usrs, mes, dp
 from services.closeChat import closeChat
 
 
-async def usersList(list_usrs, users):
+async def usersList(list_usrs, users, m):
     for user_id, secret in users:
-        list_usrs[user_id] = User(user_id, secret)
+        list_usrs[user_id] = User(user_id, secret, m)
 
 async def main():
     dp.include_router(router)
@@ -23,7 +23,7 @@ async def main():
     for list_usrs, m in zip(usrs, mes):
         res = await db.getUsers(m)
 
-        await usersList(list_usrs, res)
+        await usersList(list_usrs, res, m)
 
     try:
         await asyncio.gather(

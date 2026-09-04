@@ -1,13 +1,21 @@
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 from maxapi.types.attachments.buttons.callback_button import CallbackButton
+from maxapi.types.attachments import AttachmentButton
+from .baseKeyboards import BaseKeyboards
 
-class KeyboardsMAX:
+class KeyboardsMAX(BaseKeyboards):
 	@staticmethod
-	async def userChats(chats):
-		builder = InlineKeyboardBuilder()
+	async def createInlineKeyboars() -> InlineKeyboardBuilder:
+		return InlineKeyboardBuilder()
 
-		for secret, chat_name in chats:
-			callback = f"start_chat|{secret}"
-			builder.row(CallbackButton(text=chat_name, payload=callback))
-		builder.adjust(1)
-		return builder.as_markup()
+	@staticmethod
+	async def addCallbackButton(kb: InlineKeyboardBuilder, text: str, callback: str) -> None:
+		kb.add(CallbackButton(text=text, payload=callback))
+
+	@staticmethod
+	async def adjust(kb:InlineKeyboardBuilder, button:int = 1):
+		kb.adjust(button)
+
+	@staticmethod
+	async def returnKeyboard(kb: InlineKeyboardBuilder) -> AttachmentButton:
+		return kb.as_markup()
