@@ -2,7 +2,7 @@ from classes.user import User
 from resours import texts
 from services.services_config import Manager
 from utils.utils import Utils
-from keyboards.keyboards import Keyboards
+import keyboards.keyboards as Keyboards
 from database.database import db
 from config import max_keyboards_len
 
