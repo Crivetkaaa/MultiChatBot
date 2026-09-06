@@ -8,8 +8,8 @@ from classes.user import Users
 from classes.media import MediaType, StickerType
 from services.services_config import Manager
 from resours import texts
-from utils.utils import Utils
-from utils.utilsTG import Utils as TGUtils
+import utils.utils as Utils
+import utils.utilsTG as TGUtils
 from aiogram import Router
 from aiogram.types import CallbackQuery
 from .basebot import BaseBot
@@ -38,7 +38,7 @@ async def status_handler(message: Message):
     await BaseBot.status_handler(usr)
 
 @dp.message(Command("message"))
-@TGUtils.split_text
+@Utils.split_text
 async def message_handler(message: Message, secret: str = None, chat_name: str = None) -> None:
     usr = await Users.get_user("tg", message.chat.id)
     full_name, url = await TGUtils.getFullName(message)

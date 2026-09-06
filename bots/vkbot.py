@@ -5,8 +5,8 @@ from services.services_config import Manager
 from config import vk_bot as bot
 from resours import texts
 from classes.media import MediaType, StickerType
-from utils.utils import Utils
-from utils.utilsVK import Utils as VKUtils
+import utils.utils as Utils
+import utils.utilsVK as VKUtils
 from vkbottle.bot import MessageEvent
 from vkbottle_types.events import GroupEventType
 from bots.basebot import BaseBot

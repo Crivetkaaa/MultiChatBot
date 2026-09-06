@@ -1,8 +1,8 @@
 from aiogram import Bot
 from aiogram.types import BufferedInputFile
-from aiogram.types import InputMediaPhoto, InputMediaVideo, InputMediaDocument, InputMediaSticker
+from aiogram.types import InputMediaPhoto, InputMediaVideo, InputMediaDocument
 from classes.media import Media, MediaType, StickerType, Sticker
-from utils.utils import Utils
+import utils.utils as Utils
 
 class TgService:
     def __init__(self, tg_bot:Bot):

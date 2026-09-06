@@ -6,7 +6,7 @@ import aiohttp
 from classes.media import Media, MediaType, Sticker, StickerType
 import asyncio
 import vkbottle_types.objects as vt
-from utils.utils import Utils
+import utils.utils as Utils
 
 class VkService:
     def __init__(self, vk_bot: Bot):

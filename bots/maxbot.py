@@ -4,13 +4,12 @@ from maxapi.types.updates.message_created import MessageCreated
 from maxapi.types import Command
 from classes.user import Users
 from bots.basebot import BaseBot
-from utils.utilsMAX import Utils as MAXUtils
-from database.database import db
+import utils.utilsMAX as MAXUtils
 from maxapi.types.updates.message_callback import MessageCallback
 from services.services_config import Manager
 from resours import texts
 from classes.media import MediaType, StickerType
-from utils.utils import Utils
+import utils.utils as Utils
 
 
 @dp.message_callback()
@@ -47,7 +46,7 @@ async def quit_handler(event: MessageCreated):
 
 
 @dp.message_created(Command("message"))
-@MAXUtils.spliter
+@Utils.split_text
 async def message_handler(event: MessageCreated, secret: str=None, chat_name:str = None):
     usr = await Users.get_user("mx", event.get_ids()[1])
     full_name, url = await MAXUtils.getFullName(event)
