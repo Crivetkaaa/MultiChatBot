@@ -66,10 +66,7 @@ def _(message: Message, *args, **kwargs):
 def split_text(func):
     @wraps(func)
     async def wrapper(el, *args, **kwargs):
-        # 1. Извлекаем secret и chat_name с помощью singledispatch
         secret, chat_name = _extract_data(el)
-        
-        # 2. Вызываем исходную асинхронную функцию, передавая аргументы, как в вашем примере
         return await func(el, secret, chat_name, *args, **kwargs)
         
     return wrapper
