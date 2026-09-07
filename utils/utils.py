@@ -54,12 +54,12 @@ def _extract_data(el):
     raise f"Данный тип данных не поддерживается: {type(el)}"
 
 @_extract_data.register(MessageCreated)
-def _(event: MessageCreated, *args, **kwargs):
+def _(event: MessageCreated):
     split_t = _extract_data_support(event.message.body.text)
     return split_t
 
 @_extract_data.register(Message)
-def _(message: Message, *args, **kwargs):
+def _(message: Message):
     split_t = _extract_data_support(message.text)
     return split_t
 
