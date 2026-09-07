@@ -14,7 +14,7 @@ keyboards = {
 async def _getKeyboards(platform: str) -> BaseKeyboards:
     return keyboards[platform]
 
-async def userChats(chats, platform, first=True):
+async def userChats(chats, platform, first=True, have_next=False):
     if chats:
         keyboard_class = await _getKeyboards(platform)
         keyboard = await keyboard_class.createInlineKeyboars()
@@ -24,7 +24,7 @@ async def userChats(chats, platform, first=True):
             await keyboard_class.addCallbackButton(keyboard, chat_name, callback)
         last_id = chats[-1][0]
         callback = f"next_page|{last_id}"
-        if not( len(chats)<max_keyboards_len):
+        if not( len(chats)<max_keyboards_len) and have_next:
             await keyboard_class.addCallbackButton(keyboard, "Следующие", callback)
         if not first:
             first_id = chats[0][0]

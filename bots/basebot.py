@@ -48,9 +48,15 @@ class BaseBot:
             await usr.addChat(chat_name)
 
     @staticmethod
-    async def quit_handler(usr: User, last_id: int=0, first=True):
-        chats = await db.getChats(usr.secret, last_id)
-        keyboard = await Keyboards.userChats(chats, usr.user_mes, first)
+    async def quit_handler(usr: User, last_id: int=0, first=True, next_page=True):
+        chats, have_more = await db.getChats(usr.secret, last_id, next_page)
+        if next_page:
+            have_next = have_more
+        else:
+            have_next = True
+            first = not have_more
+            
+        keyboard = await Keyboards.userChats(chats, usr.user_mes, first, have_next)
         if usr.in_message:
             await usr.end_chat()
             await Manager.info_for_user(usr, texts["end_chat"], keyboard)
@@ -75,7 +81,7 @@ class BaseBot:
 
             case "back_page":
                 first_id = int(split_command[1]) - max_keyboards_len-1
-                await BaseBot.quit_handler(usr, first_id, False)
+                await BaseBot.quit_handler(usr, first_id, False, False)
             case _:
                 await Manager.info_for_user(usr, "err")
             

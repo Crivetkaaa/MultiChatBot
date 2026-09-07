@@ -48,19 +48,26 @@ class DataBase:
         )
         await self.conn.commit()
 
-    async def getChats(self, user_secret: str, last_id: int=0) -> Iterable[Row] | None:
+    async def getChats(self, user_secret: str, last_id: int=0, next_page=True) -> tuple[Iterable[Row] | None, bool]:
         async with self.conn.execute(
-            """SELECT id, who_secret, chat_name
+            f"""SELECT id, who_secret, chat_name
             FROM p2p
             WHERE user_secret = ?
-            AND id > ?
+            AND id {">" if next_page else "<"} ?
             ORDER BY id
             LIMIT ?
             """,
-            (user_secret, last_id, max_keyboards_len)
+            (user_secret, last_id, max_keyboards_len+1)
         ) as c:
             rows = await c.fetchall()
-            return rows
+            have_more = len(rows) > max_keyboards_len
+
+            rows = rows[:max_keyboards_len]
+
+            if not next_page:
+                rows.reverse()
+
+            return rows, have_more
         return None
 
 db = DataBase("db.db")

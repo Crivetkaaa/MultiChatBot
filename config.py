@@ -34,5 +34,5 @@ MX_TOKEN = os.getenv("max_token")
 mx_bot = MxBot(MX_TOKEN)
 mx_dp = MxDispatcher(mx_bot)
 
-max_keyboards_len = 1
+max_keyboards_len = 8
 secret_len = 20
