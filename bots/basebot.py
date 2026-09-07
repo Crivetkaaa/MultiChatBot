@@ -55,7 +55,7 @@ class BaseBot:
         else:
             have_next = True
             first = not have_more
-            
+
         keyboard = await Keyboards.userChats(chats, usr.user_mes, first, have_next)
         if usr.in_message:
             await usr.end_chat()
@@ -80,7 +80,7 @@ class BaseBot:
                 await BaseBot.quit_handler(usr, last_id, False)
 
             case "back_page":
-                first_id = int(split_command[1]) - max_keyboards_len-1
+                first_id = int(split_command[1])
                 await BaseBot.quit_handler(usr, first_id, False, False)
             case _:
                 await Manager.info_for_user(usr, "err")
