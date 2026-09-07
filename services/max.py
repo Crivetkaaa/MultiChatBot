@@ -14,12 +14,20 @@ class MxService:
                 return await response.read()
 
         
-    async def info_for_user(self, user_id, text, keyboard=None):
-        await self.bot.send_message(
+    async def info_for_user(self, user_id, text, keyboard=None, message_id=0):
+        if message_id:
+            await self.bot.edit_message(
+                message_id=message_id,
+                text=text, 
+                attachments=[keyboard] if keyboard else None
+            )
+            return message_id
+        msg = await self.bot.send_message(
             user_id=user_id,
             text=text,
             attachments=[keyboard] if keyboard else None
         )
+        return msg.message.body.mid
 
     async def send_message(self, user_id: int, text: str):
         await self.bot.send_message(user_id=user_id, text = text)

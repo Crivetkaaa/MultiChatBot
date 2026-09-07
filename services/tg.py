@@ -82,6 +82,9 @@ class TgService:
     async def send_sticker(self, user_id: int, sticker:Sticker, text:str):
         await self.sticker_update(user_id, sticker, text)
 
-    async def info_for_user(self, user_id, text, keyboard=None):
-        await self.bot.send_message(user_id, text, reply_markup=keyboard) 
-        
+    async def info_for_user(self, user_id, text, keyboard=None, message_id=0):
+        if message_id:
+            await self.bot.edit_message_text(chat_id=user_id, text=text, message_id=message_id, reply_markup=keyboard)
+            return message_id
+        msg = await self.bot.send_message(user_id, text, reply_markup=keyboard) 
+        return msg.message_id

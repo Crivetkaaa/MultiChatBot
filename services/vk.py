@@ -111,5 +111,9 @@ class VkService:
         await self.sticker_update(user_id, sticker, text)
 
 
-    async def info_for_user(self, **params):
-        await self.bot.api.messages.send(**params)
+    async def info_for_user(self, message_id, **params):
+        if message_id:
+            await self.bot.api.messages.edit(message_id=message_id, **params)
+            return message_id
+        msg = await self.bot.api.messages.send(**params)
+        return msg

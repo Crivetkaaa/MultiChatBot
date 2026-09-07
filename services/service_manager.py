@@ -61,7 +61,7 @@ class ServiceManager:
         full_text = await usr.finally_text()
         await self._route_and_send("sticker", usr, sticker, full_text)
 
-    async def info_for_user(self, usr:User, text: str, keyboard=None):
+    async def info_for_user(self, usr:User, text: str, keyboard=None, message_id=0):
         if "dms=" in usr.secret:
             params = {
                 "peer_id": usr.user_id,
@@ -70,13 +70,13 @@ class ServiceManager:
             }
             if keyboard:
                 params["keyboard"] = keyboard.get_json()
-            await self.vk.info_for_user(**params)
+            msg = await self.vk.info_for_user(message_id, **params)
 
         elif "dGc=" in usr.secret:
-            await self.tg.info_for_user(usr.user_id, text, keyboard)
+            msg = await self.tg.info_for_user(usr.user_id, text, keyboard, message_id)
 
         elif "bXg=" in usr.secret:
-            await self.mx.info_for_user(usr.user_id, text, keyboard)
+            msg = await self.mx.info_for_user(usr.user_id, text, keyboard, message_id)
 
-        else:
-            print("Нету")
+        if msg:
+            usr.last_message_id = msg

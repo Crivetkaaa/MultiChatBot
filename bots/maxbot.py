@@ -16,7 +16,7 @@ async def callback_handler(event: MessageCallback):
     usr = await Users.get_user("mx",  event.get_ids()[1])
     payload = event.callback.payload if event.callback else None
     await BaseBot.callback_handler(usr, payload, event, "mx")
-    await event.answer()
+
 
 @dp.bot_started()
 async def start_handler(event: BotStarted):

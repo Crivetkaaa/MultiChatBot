@@ -48,7 +48,7 @@ class BaseBot:
             await usr.addChat(chat_name)
 
     @staticmethod
-    async def quit_handler(usr: User, last_id: int=0, first=True, next_page=True):
+    async def quit_handler(usr: User, last_id: int=0, first=True, next_page=True, message_id = 0):
         chats, have_more = await db.getChats(usr.secret, last_id, next_page)
         if next_page:
             have_next = have_more
@@ -57,11 +57,12 @@ class BaseBot:
             first = not have_more
 
         keyboard = await Keyboards.userChats(chats, usr.user_mes, first, have_next)
+        
         if usr.in_message:
             await usr.end_chat()
-            await Manager.info_for_user(usr, texts["end_chat"], keyboard)
+            await Manager.info_for_user(usr, texts["end_chat"], keyboard, message_id)
         else:
-            await Manager.info_for_user(usr, texts["not_in_chat"], keyboard)
+            await Manager.info_for_user(usr, texts["not_in_chat"], keyboard, message_id)
 
     @staticmethod
     async def help_handler(usr: User):
@@ -76,12 +77,24 @@ class BaseBot:
                 await BaseBot.message_handler(usr, who_secret, None, event, mes)
 
             case "next_page":
-                last_id = split_command[1]
-                await BaseBot.quit_handler(usr, last_id, False)
-
+                last_id = int(split_command[1])
+                await BaseBot.quit_handler(
+                    usr,
+                    last_id=last_id,
+                    first=False,
+                    next_page=True,
+                    message_id=usr.last_message_id
+                )
             case "back_page":
                 first_id = int(split_command[1])
-                await BaseBot.quit_handler(usr, first_id, False, False)
+
+                await BaseBot.quit_handler(
+                    usr,
+                    last_id=first_id,
+                    first=False,
+                    next_page=False,
+                    message_id=usr.last_message_id
+                )
             case _:
                 await Manager.info_for_user(usr, "err")
             
