@@ -6,7 +6,6 @@ from config import vk_bot as bot
 from resours import texts
 from classes.media import MediaType, StickerType
 import utils.utils as Utils
-import utils.utilsVK as VKUtils
 from vkbottle.bot import MessageEvent
 from vkbottle_types.events import GroupEventType
 from bots.basebot import BaseBot
@@ -18,8 +17,7 @@ processed_messages = set()
 async def callback_handler(event: MessageEvent):
     usr = await Users.get_user("vk", event.object.user_id)
     raw_command = event.payload.get("cmd")
-    full_name, url = await VKUtils.getFullName(event)
-    await BaseBot.callback_handler(usr, raw_command, full_name, url, "vk")
+    await BaseBot.callback_handler(usr, raw_command, event, "vk")
     await event.send_empty_answer()
 
 
@@ -49,8 +47,7 @@ async def message(message: Message):
 
 async def message_support(message:Message, secret:str=None, chat_name:str=None):
     usr = await Users.get_user("vk", message.peer_id) 
-    full_name, url = await VKUtils.getFullName(message)
-    await BaseBot.message_handler(usr, secret, chat_name, full_name, url, "vk")
+    await BaseBot.message_handler(usr, secret, chat_name, message, "vk")
     
 
 @bot.on.private_message(text="/quit")

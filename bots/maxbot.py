@@ -4,7 +4,6 @@ from maxapi.types.updates.message_created import MessageCreated
 from maxapi.types import Command
 from classes.user import Users
 from bots.basebot import BaseBot
-import utils.utilsMAX as MAXUtils
 from maxapi.types.updates.message_callback import MessageCallback
 from services.services_config import Manager
 from resours import texts
@@ -16,10 +15,8 @@ import utils.utils as Utils
 async def callback_handler(event: MessageCallback):
     usr = await Users.get_user("mx",  event.get_ids()[1])
     payload = event.callback.payload if event.callback else None
-    full_name, url = await MAXUtils.getFullName(event)
-    await BaseBot.callback_handler(usr, payload, full_name, url, "mx")
+    await BaseBot.callback_handler(usr, payload, event, "mx")
     await event.answer()
-
 
 @dp.bot_started()
 async def start_handler(event: BotStarted):
@@ -49,8 +46,7 @@ async def quit_handler(event: MessageCreated):
 @Utils.split_text
 async def message_handler(event: MessageCreated, secret: str=None, chat_name:str = None):
     usr = await Users.get_user("mx", event.get_ids()[1])
-    full_name, url = await MAXUtils.getFullName(event)
-    await BaseBot.message_handler(usr, secret, chat_name, full_name, url, "max")
+    await BaseBot.message_handler(usr, secret, chat_name, event, "max")
 
 
 @dp.message_created(Command("help"))

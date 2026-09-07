@@ -1,7 +1,7 @@
 from classes.user import User
 from resours import texts
 from services.services_config import Manager
-import utils.utils as Utils
+import utils as Utils
 import keyboards.keyboards as Keyboards
 from database.database import db
 from config import max_keyboards_len
@@ -24,9 +24,10 @@ class BaseBot:
     async def message_handler(usr: User, 
                               secret: str = None, 
                               chat_name:str=None,
-                              full_name:str=None,
-                              url:str=None,
+                              event=None,
                               mes:str=None):
+        full_name, url = await Utils.getFullName(event)
+        
         if usr.in_message:
             await Manager.info_for_user(usr, texts["err_new_chat"])
             return
@@ -61,12 +62,12 @@ class BaseBot:
         await Manager.info_for_user(usr, texts["help"])
 
     @staticmethod
-    async def callback_handler(usr: User, raw_command: str, full_name: str, url: str, mes: str):
+    async def callback_handler(usr: User, raw_command: str, event, mes: str):
         split_command = raw_command.split("|")
         match split_command[0]:
             case "start_chat":
                 who_secret = split_command[1]
-                await BaseBot.message_handler(usr, who_secret, None, full_name, url, mes)
+                await BaseBot.message_handler(usr, who_secret, None, event, mes)
 
             case "next_page":
                 last_id = split_command[1]

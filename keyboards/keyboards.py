@@ -34,4 +34,4 @@ async def userChats(chats, platform, first=True):
 
         return await keyboard_class.returnKeyboard(keyboard)
     
-        return None
+    return None

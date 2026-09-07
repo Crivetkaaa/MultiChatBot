@@ -1,8 +1,7 @@
 from maxapi import Bot
 import aiohttp
-import io
-from classes.media import MediaType, Media
-from maxapi.types.input_media import InputMedia, InputMediaBuffer
+from classes.media import Media
+from maxapi.types.input_media import InputMediaBuffer
 
 class MxService:
     def __init__(self, mx_bot:Bot):

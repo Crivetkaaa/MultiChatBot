@@ -9,7 +9,6 @@ from classes.media import MediaType, StickerType
 from services.services_config import Manager
 from resours import texts
 import utils.utils as Utils
-import utils.utilsTG as TGUtils
 from aiogram import Router
 from aiogram.types import CallbackQuery
 from .basebot import BaseBot
@@ -21,8 +20,7 @@ router = Router()
 @router.callback_query()
 async def callback(c: CallbackQuery):
     usr = await Users.get_user("tg", c.from_user.id)
-    full_name, url = await TGUtils.getFullName(c)
-    await BaseBot.callback_handler(usr, c.data, full_name, url, "tg")            
+    await BaseBot.callback_handler(usr, c.data, c, "tg")            
     await c.answer()
 
 
@@ -41,8 +39,7 @@ async def status_handler(message: Message):
 @Utils.split_text
 async def message_handler(message: Message, secret: str = None, chat_name: str = None) -> None:
     usr = await Users.get_user("tg", message.chat.id)
-    full_name, url = await TGUtils.getFullName(message)
-    await BaseBot.message_handler(usr, secret, chat_name, full_name, url, "tg")
+    await BaseBot.message_handler(usr, secret, chat_name, message, "tg")
 
 @dp.message(Command("quit"))
 async def quit_handler(message: Message) -> None:
