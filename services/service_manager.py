@@ -6,6 +6,7 @@ from services.vk import VkService
 from services.tg import TgService
 from services.max import MxService
 from classes.media import Media, Sticker
+from resours import texts 
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -40,7 +41,7 @@ class ServiceManager:
         target_func = getattr(platform, method_name, None)
 
         if target_func == None:
-            print(f"Метод {method_name} не реализован")
+            await self.info_for_user(usr, texts["err_type_answer"])
             return
         await usr.last_message_time()
         await target_func(user_id, *args, **kwargs)
