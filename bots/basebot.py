@@ -9,8 +9,10 @@ from database.database import db
 class BaseBot:
     @staticmethod
     async def start_handler(usr: User):
-        text = texts["help"] + "\n\n" + f'{texts["start_bottom"]} \n{usr.secret}'
+        text = texts["help"] + "\n\n"
+        text_bottom = f'{texts["start_bottom"]} \n{usr.secret}'
         await Manager.info_for_user(usr, text)
+        await Manager.info_for_user(usr, text_bottom)
 
     @staticmethod
     async def status_handler(usr:User):
