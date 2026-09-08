@@ -21,7 +21,7 @@ async def callback_handler(event: MessageEvent):
     await event.send_empty_answer()
 
 
-@bot.on.private_message(text=["/start", "начать"])
+@bot.on.private_message(text=["/start", "Начать"])
 async def start_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
     await BaseBot.start_handler(usr)
