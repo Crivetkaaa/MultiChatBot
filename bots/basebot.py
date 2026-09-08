@@ -4,7 +4,6 @@ from services.services_config import Manager
 import utils as Utils
 import keyboards.keyboards as Keyboards
 from database.database import db
-from config import max_keyboards_len
 
 
 class BaseBot:

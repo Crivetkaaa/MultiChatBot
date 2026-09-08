@@ -32,6 +32,8 @@ class User:
             self.head = f"Сообщение из {from_}\nОт: {name}\nИз: {url}\n\n"
         elif "dGc=" in secret:
             self.head = f"Сообщение из {from_}\nОт: <a href=\"{url}\">{name}</a>\n\n"
+        elif "bXg=" in secret:
+            self.head = f"Сообщение из {from_}\nОт: {name}\nИз: {url}\n\n"
         else:
             self.head = f"Сообщение из {from_}\nОт: {name}\n\n"
 

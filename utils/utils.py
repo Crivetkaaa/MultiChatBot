@@ -7,6 +7,7 @@ from maxapi.types.updates.message_callback import MessageCallback
 from aiogram.types import Message as TGMessage
 from functools import wraps
 from vkbottle.bot import Message, MessageEvent
+from aiogram.types import CallbackQuery
 
 
 async def webm_to_gif(m_bytes: bytes) -> bytes:
@@ -90,21 +91,19 @@ async def _(event:  MessageCreated | MessageCallback):
     if usr_info.username:
         url = f"https://max.ru/{usr_info.username}"
     else:
-        url = f"max://user?id={usr_info.user_id}"
-
+        url = f"https://max.ru/{usr_info.user_id}"
     return (full_name, url)
 
-@_getFullNameDispatch.register(TGMessage)
-async def _(message: TGMessage):
+@_getFullNameDispatch.register(TGMessage|CallbackQuery)
+async def _(message: TGMessage|CallbackQuery):
     usr_info = message.from_user
     last_name = usr_info.last_name or ""
     first_name = usr_info.first_name or ""
     full_name = f"{last_name} {first_name}".strip()
-
     if usr_info.username:
         url = f"https://t.me/{usr_info.username}"
     else:
-        url = f"tg://user?id={usr_info.id}"
+        url = f"https://max.ru/{usr_info.user_id}"
 
     return (full_name, url)
 
@@ -119,7 +118,10 @@ async def _(message: Message|MessageEvent):
         )
         usr_info = user_info[0]
     full_name = usr_info.last_name + " " + usr_info.first_name
-    url = f"https://vk.ru/{usr_info.screen_name}"
+    if usr_info.screen_name:
+        url = f"https://vk.ru/{usr_info.screen_name}"
+    else:
+        url = f"https://vk.ru/{message.user_id}"
     return (full_name, url)
 
 async def getFullName(el):
