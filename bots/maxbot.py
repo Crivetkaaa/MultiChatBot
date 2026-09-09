@@ -60,7 +60,7 @@ async def default_hendler(event: MessageCreated):
     usr = await Users.get_user("mx", event.get_ids()[1])
 
     if not usr.in_message:
-        await Manager.info_for_user(usr, texts["not_in_chat"])
+        await BaseBot.user_not_in_chat(usr)
         return
     attachments = event.message.body.attachments
 

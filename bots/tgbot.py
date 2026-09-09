@@ -60,7 +60,7 @@ async def default_handler(message: Message, album: list[Message] = None) -> None
     usr = await Users.get_user("tg", message.chat.id)
 
     if not usr.in_message: 
-        await Manager.info_for_user(usr, texts["not_in_chat"])
+        await BaseBot.user_not_in_chat(usr)
         return
 
     try:

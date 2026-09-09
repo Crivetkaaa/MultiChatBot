@@ -66,7 +66,7 @@ async def help_handler(message: Message):
 async def default_handler(message: Message):
     usr = await Users.get_user("vk", message.peer_id)
     if not usr.in_message:
-        await Manager.info_for_user(usr, texts["not_in_chat"])
+        await BaseBot.user_not_in_chat(usr)
         return
 
     msg_id = message.conversation_message_id

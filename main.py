@@ -28,8 +28,8 @@ async def main():
     try:
         await asyncio.gather(
             tg_main(),
-            vk_main(),
-            mx_main(),
+            # vk_main(),
+            # mx_main(),
 
             closeChat()
         )
