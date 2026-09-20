@@ -7,6 +7,7 @@ from services.tg import TgService
 from services.max import MxService
 from classes.media import Media, Sticker
 from resours import texts 
+import keyboards.keyboards as keyboards
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -44,6 +45,8 @@ class ServiceManager:
             await self.info_for_user(usr, texts["err_type_answer"])
             return
         await usr.last_message_time()
+        keyboard = await keyboards.fastAnswer(usr.secret, p)
+        kwargs["keyboard"] = keyboard
         await target_func(user_id, *args, **kwargs)
 
     async def send_message(self, usr:User, text: str):

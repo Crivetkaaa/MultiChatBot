@@ -35,3 +35,11 @@ async def userChats(chats, platform, first=True, have_next=False):
         return await keyboard_class.returnKeyboard(keyboard)
     
     return None
+
+async def fastAnswer(usr_secret, platform):
+    keyboards_class = await _getKeyboards(platform)
+    keyboard = await keyboards_class.createInlineKeyboars()
+    callback = f"fast_answer|{usr_secret}"
+    await keyboards_class.addCallbackButton(keyboard, "Ответить", callback)
+    await keyboards_class.adjust(keyboard)
+    return await keyboards_class.returnKeyboard(keyboard)

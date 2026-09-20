@@ -97,6 +97,12 @@ class BaseBot:
                 keyboard = await BaseBot.create_chats_keyboard(usr, first_id, False, False)
                 await Manager.info_for_user(usr, texts["not_in_chat"], keyboard, usr.last_message_id)
 
+            case "fast_answer":
+                who_secret = split_command[1]
+                full_name, url = await Utils.getFullName(event)
+                await usr.start_chat(who_secret, full_name, url, mes)
+                await Manager.info_for_user(usr, texts["start_chat"])
+
             case _:
                 await Manager.info_for_user(usr, "err")
             

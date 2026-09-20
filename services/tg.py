@@ -13,17 +13,17 @@ class TgService:
         file_in_memory = await self.bot.download_file(file.file_path)
         return file_in_memory.getvalue()
 
-    async def send_message(self, user_id: int, text: str):
-        await self.bot.send_message(user_id, text, parse_mode="HTML")
+    async def send_message(self, user_id: int, text: str, keyboard=None):
+        await self.bot.send_message(user_id, text, parse_mode="HTML", reply_markup=keyboard)
 
-    async def send_audio(self, user_id: int, audio_raw: bytes, text:str):
+    async def send_audio(self, user_id: int, audio_raw: bytes, text:str, keyboard=None):
         audio = BufferedInputFile(file=audio_raw, filename="audio.ogg")
-        await self.bot.send_message(chat_id=user_id, text=text, parse_mode="HTML")
+        await self.bot.send_message(chat_id=user_id, text=text, parse_mode="HTML", reply_markup=keyboard)
         await self.bot.send_voice(chat_id=user_id, voice=audio)
 
-    async def send_media(self, user_id: int, media: list[Media], text: str):
+    async def send_media(self, user_id: int, media: list[Media], text: str, keyboard=None):
         media = await self.media_update(media, text)
-        await self.bot.send_media_group(user_id, media)
+        await self.bot.send_media_group(user_id, media, reply_markup=keyboard)
 
     async def media_update(self, media: list[Media], text:str):
         m = []
@@ -58,7 +58,7 @@ class TgService:
             sticker.filename = "sticker.gif"
         return sticker
 
-    async def sticker_update(self, user_id:int, sticker: Sticker, text:str):
+    async def sticker_update(self, user_id:int, sticker: Sticker, text:str, keyboard=None):
         sticker = await self.sticker_type(sticker)
         file = BufferedInputFile(
             file=sticker.m_bytes,
@@ -69,18 +69,20 @@ class TgService:
             await self.bot.send_photo(
                 chat_id=user_id,
                 photo=file,
-                caption=text
+                caption=text,
+                reply_markup=keyboard
             )
 
         elif sticker.s_type == StickerType.VIDEO:
             await self.bot.send_video(
                 chat_id=user_id,
                 video=file,
-                caption=text
+                caption=text,
+                reply_markup=keyboard
             )
 
-    async def send_sticker(self, user_id: int, sticker:Sticker, text:str):
-        await self.sticker_update(user_id, sticker, text)
+    async def send_sticker(self, user_id: int, sticker:Sticker, text:str, keyboard=None):
+        await self.sticker_update(user_id, sticker, text, keyboard)
 
     async def info_for_user(self, user_id, text, keyboard=None, message_id=0):
         if message_id:

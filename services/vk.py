@@ -33,21 +33,22 @@ class VkService:
         url = f"https://vk.ru/sticker/1-{sticker_id}-352b"
         return await self.download_vk(url)
 
-    async def send_vk(self, peer_id: int, text: str, attachment:str=None):
+    async def send_vk(self, peer_id: int, text: str, attachment:str=None, keyboard=None):
         try:
             await self.bot.api.messages.send(
                 peer_id=peer_id,
                 message=text,
                 attachment=attachment, 
+                keyboard=keyboard.get_json() if keyboard else None,
                 random_id=random.randint(0, 2**31 - 1)
             )
         except Exception as e:
             print(f"Ошибка отправки в ВК: {e}")
 
-    async def send_message(self, user_id:int, text:str):
-        await self.send_vk(user_id, text)
+    async def send_message(self, user_id:int, text:str, keyboard=None):
+        await self.send_vk(user_id, text, keyboard=keyboard)
 
-    async def send_audio(self, user_id: int, audio: bytes, text:str):
+    async def send_audio(self, user_id: int, audio: bytes, text:str, keyboard=None):
         audio_buffer = io.BytesIO(audio)
         audio_buffer.name = "voice.ogg"
 
@@ -56,12 +57,12 @@ class VkService:
             peer_id=user_id,
             type="audio_message" 
         )
-        await self.send_vk(user_id, text, str(attachment))
+        await self.send_vk(user_id, text, str(attachment), keyboard=keyboard)
 
-    async def send_media(self, user_id: int, media: list[Media], text: str):
+    async def send_media(self, user_id: int, media: list[Media], text: str, keyboard=None):
         media_at = await self.media_update(media, user_id)
         final_attachment = ",".join(media_at)
-        await self.send_vk(user_id, text, final_attachment)
+        await self.send_vk(user_id, text, final_attachment, keyboard=keyboard)
 
     async def media_update(self, media: list[Media], user_id: int):
         at = []
@@ -87,7 +88,7 @@ class VkService:
                 await asyncio.sleep(0.3)
         return at
 
-    async def sticker_update(self, user_id:int, sticker: Sticker, text:str):
+    async def sticker_update(self, user_id:int, sticker: Sticker, text:str, keyboard=None):
         uploader = None
         if sticker.s_type == StickerType.PHOTO:
             uploader = self.photo_uploader
@@ -105,10 +106,10 @@ class VkService:
         )
 
         finally_attachment = ",".join([at])
-        await self.send_vk(user_id, text, finally_attachment)
+        await self.send_vk(user_id, text, finally_attachment, keyboard=keyboard)
 
-    async def send_sticker(self, user_id:int, sticker: Sticker, text:str):
-        await self.sticker_update(user_id, sticker, text)
+    async def send_sticker(self, user_id:int, sticker: Sticker, text:str, keyboard=None):
+        await self.sticker_update(user_id, sticker, text, keyboard=keyboard)
 
 
     async def info_for_user(self, message_id, **params):
