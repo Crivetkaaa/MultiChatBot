@@ -20,6 +20,8 @@ bot_name=MyMultiChat_Bot
 
 # Токен вашего Telegram-бота, полученный от @BotFather
 tg_token=1234567890:ABCdefGhIJKlmNoPQRsTUVwxyZ
+# Токен вашего Max-бота
+max_token=f9LHodD0cOJ6i9wqY8CxlCxGSNJwfDdRA7T2wZAg6z5-SB8lUuwWrXLuoKuUpJb1JA8OXBy0L-saVjWmcSqa
 
 # Адрес прокси-сервера (если требуется обход блокировок, например: http://user:pass@ip:port). 
 # Если прокси не используется, оставьте поле пустым.
